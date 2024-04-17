@@ -1,0 +1,14 @@
+---
+title: "STA210 SP'24 Final Project"
+subtitle: "Exploring 2023 Stop and Frisk Data in NYC"
+author: "amaris"
+format: pdf
+---
+
+```{r, packages&dataset, message = F, warning =F}
+library(tidyverse) 
+library(tidymodels)
+library(dplyr)
+library(readxl)
+stop_and_frisk <- read_excel("2023_nypd_stop_and_frisk_data.xlsx")
+```
