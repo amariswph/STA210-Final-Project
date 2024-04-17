@@ -12,3 +12,118 @@ library(dplyr)
 library(readxl)
 stop_and_frisk <- read_excel("2023_nypd_stop_and_frisk_data.xlsx")
 ```
+
+## Dataset:
+
+Source: https://www.nyc.gov/site/nypd/stats/reports-analysis/stopfrisk.page
+
+Every time a police officer stops a person in NYC, the officer *is supposed to* fill out a form recording the details of the stop. The forms were filled out by hand and manually entered into an NYPD database until 2017, when the forms became electronic. The NYPD reports stop-and-frisk data in two ways: a summary report released quarterly and a complete database released annually to the public.
+
+The annual database includes nearly all of the data recorded by the police officer after a stop such as the age of the person stopped, if a person was frisked, if there was a weapon or firearm recovered, if physical force was used, and the exact location of the stop within the precinct, etc.
+
+Physical characteristics -\> police officer perception & reactions?
+
+```{r}
+demeanor_types <- stop_and_frisk |> 
+  count(DEMEANOR_OF_PERSON_STOPPED)
+```
+
+```{r}
+stop_and_frisk |> 
+  mutate(test = if_else(DEMEANOR_OF_PERSON_STOPPED == "AGITATED", 1, 0)) |> 
+           ggplot(aes(x = test, fill = SUSPECT_RACE_DESCRIPTION)) + 
+           geom_bar(position = "fill") 
+         
+```
+
+Let's categorize the 69 demeanor descriptions into 5 broad categories based on their similarity in meaning or behavior.
+
+We'll group them as follows:
+
+**1. Calm/Neutral Demeanor:**
+
+\- This category includes descriptions indicating a relaxed, cooperative, or normal state of mind.
+
+\- CALM - NORMAL - APPARENTLY NORMAL - RELAXED - QUIET - UNDERSTANDING - CALM AND COOPERATIVE - CALM AND COMPLIANT - CALM AND UNDERSTANDING - CALM COOPERATIVE - CALMED - NEUTRAL - LAUGHING - CALM COMPLIANT - CALM UNDERSTANDING  - APP NORMAL  - COMPLIANT  - APPARENT NORMAL
+
+**2. Nervous/Anxious Demeanor:**
+
+\- Descriptions reflecting anxiety, nervousness, or apprehension.
+
+\- NERVOUS - ANXIOUS - VERY NERVOUS - EXTREMELY NERVOUS - PHYSICALLY NERVOUS - NERVOUS SCARED - NERVOUS OUT OF BREATH - AGGITATED  - SCARED  - SUSPICIOUS - APPREHENSIVE
+
+**3. Angry/Confrontational Demeanor:**
+
+\- This category comprises descriptions indicating anger, aggression, or hostility.
+
+\- UPSET - ANNOYED - ANGRY - AGITATED - AGGRESSIVE - COMBATIVE - IRATE - IRRITATED - AGGRAVATED - HOSTILE - MAD - AGGRESSIVE/NERVOUS - UNCOOPERATIVE - IRRATE  - AGGRESIVE - ARGUMENTATIVE  - DEFENSIVE - WORRIED - NON COMPLIANT
+
+**4. Confused/Disoriented Demeanor:**
+
+\- Descriptions suggesting confusion, surprise, or disorientation.
+
+\- CONFUSED - SURPRISED - SHOCKED  - INTOXICATED  - INTOX - ERRATIC - OUT OF BREATH
+
+**5. Indifferent Demeanor:**
+
+\- Descriptions suggesting withdrawal
+
+\- INDIFFERENT - EVASIVE - TIRED  - NERVOUSE
+
+**Other/Outliers (Removed):**
+
+\- Some descriptions are less common or do not fit well into the above categories.
+
+Removed Descriptions: Defensive (21), Laughing (16), Crying (14), Excited (14), Talkative (22), NA, N/A
+
+These categorizations aim to group similar demeanor descriptions together based on their emotional or behavioral context, allowing for a more concise representation suitable for further analysis using multinomial regression models.
+
+```{r, creatingcategories, message = F, warning = F}
+
+stop_and_frisk <- stop_and_frisk|>
+   mutate(category = case_when(
+    DEMEANOR_OF_PERSON_STOPPED %in% c("CALM", "NORMAL", "APPARENTLY NORMAL", "RELAXED", "QUIET",
+                    "UNDERSTANDING", "CALM AND COOPERATIVE", "CALM AND COMPLIANT",
+                    "CALM AND UNDERSTANDING", "CALM COOPERATIVE", "CALMED", "NEUTRAL",
+                    "LAUGHING", "CALM COMPLIANT", "CALM UNDERSTANDING") ~ "Calm/Neutral Demeanor",
+    DEMEANOR_OF_PERSON_STOPPED %in% c("NERVOUS", "ANXIOUS", "VERY NERVOUS", "EXTREMELY NERVOUS",
+                    "PHYSICALLY NERVOUS", "NERVOUS SCARED", "NERVOUS OUT OF BREATH") ~ "Nervous/Anxious Demeanor",
+    DEMEANOR_OF_PERSON_STOPPED %in% c("UPSET", "ANNOYED", "ANGRY", "AGITATED", "AGGRESSIVE", "COMBATIVE",
+                    "IRATE", "IRRITATED", "AGGRAVATED", "HOSTILE", "MAD", "AGGRESSIVE/NERVOUS") ~ "Angry/Confrontational Demeanor",
+    DEMEANOR_OF_PERSON_STOPPED %in% c("CONFUSED", "SURPRISED", "SHOCKED") ~ "Confused/Disoriented Demeanor",
+    DEMEANOR_OF_PERSON_STOPPED %in% c("INDIFFERENT") ~ "Indifferent Demeanor",
+    TRUE ~ "Other/Outliers"  # Default case for any other demeanor not matching the above
+  ))
+```
+
+```{r}
+stop_and_frisk |>
+  count(category)
+```
+
+```{r}
+stop_and_frisk |> 
+  mutate(test = if_else(category == "Angry/Confrontational Demeanor", 1, 0)) |> 
+           ggplot(aes(x = test, fill = SUSPECT_RACE_DESCRIPTION)) + 
+           geom_bar(position = "fill") 
+
+stop_and_frisk |> 
+  mutate(test = if_else(category == "Calm/Neutral Demeanor", 1, 0)) |> 
+           ggplot(aes(x = test, fill = SUSPECT_RACE_DESCRIPTION)) + 
+           geom_bar(position = "fill") 
+
+stop_and_frisk |> 
+  mutate(test = if_else(category == "Nervous/Anxious Demeanor", 1, 0)) |> 
+           ggplot(aes(x = test, fill = SUSPECT_RACE_DESCRIPTION)) + 
+           geom_bar(position = "fill") 
+
+stop_and_frisk |> 
+  mutate(test = if_else(category == "Confused/Disoriented Demeanor", 1, 0)) |> 
+           ggplot(aes(x = test, fill = SUSPECT_RACE_DESCRIPTION)) + 
+           geom_bar(position = "fill") 
+
+stop_and_frisk |> 
+  mutate(test = if_else(category == "Indifferent Demeanor", 1, 0)) |> 
+           ggplot(aes(x = test, fill = SUSPECT_RACE_DESCRIPTION)) + 
+           geom_bar(position = "fill") 
+```
