@@ -5,11 +5,14 @@ author: "amaris"
 format: pdf
 ---
 
-```{r, packages&dataset, message = F, warning =F}
+```{r, packages&dataset, message = F, warning =F, echo = F}
 library(tidyverse) 
 library(tidymodels)
 library(dplyr)
 library(readxl)
+devtools::install_github('Mikata-Project/ggthemr')
+library(ggthemr)
+ggthemr('fresh')
 stop_and_frisk <- read_excel("2023_nypd_stop_and_frisk_data.xlsx")
 ```
 
@@ -71,69 +74,34 @@ ASK_FOR_CONSENT_FLG (chr): indicates whether the police asked for subject consen
 
 ### Data Cleaning & New Variable Creation
 
-### Exploratory Data Analysis
+Upon reviewing the dataset, we identified a total of 1589 unique demeanor descriptions. To streamline our analysis, we focused on demeanor descriptions that appeared 10 or more times, aiming to capture meaningful trends and patterns. We then categorized these 69 demeanor descriptions into 5 broader categories based on their semantic similarities. While we recognize that the categorizations can be rather arbitrary, the groupings based on similarities in emotional or behavioral context allows for a more concise representation suitable for further analysis.
 
-### 
-
-```{r}
-demeanor_types <- stop_and_frisk |> 
-  count(DEMEANOR_OF_PERSON_STOPPED)
-```
-
-```{r}
-stop_and_frisk |> 
-  mutate(test = if_else(DEMEANOR_OF_PERSON_STOPPED == "AGITATED", 1, 0)) |> 
-           ggplot(aes(x = test, fill = SUSPECT_RACE_DESCRIPTION)) + 
-           geom_bar(position = "fill") 
-         
-```
-
-Let's categorize the 69 demeanor descriptions into 5 broad categories based on their similarity in meaning or behavior.
-
-We'll group them as follows:
-
-**1. Calm/Neutral Demeanor:**
-
-\- This category includes descriptions indicating a relaxed, cooperative, or normal state of mind.
+**1. Calm/Neutral Demeanor:** This category includes descriptions indicating a relaxed, cooperative, or normal state of mind.
 
 \- CALM - NORMAL - APPARENTLY NORMAL - RELAXED - QUIET - UNDERSTANDING - CALM AND COOPERATIVE - CALM AND COMPLIANT - CALM AND UNDERSTANDING - CALM COOPERATIVE - CALMED - NEUTRAL - CALM COMPLIANT - CALM UNDERSTANDING - APP NORMAL - COMPLIANT - APPARENT NORMAL
 
-**2. Nervous/Anxious Demeanor:**
-
-\- Descriptions reflecting anxiety, nervousness, or apprehension.
+**2. Nervous/Anxious Demeanor:** Descriptions reflecting anxiety, nervousness, or apprehension.
 
 \- NERVOUS - ANXIOUS - VERY NERVOUS - EXTREMELY NERVOUS - PHYSICALLY NERVOUS - NERVOUS SCARED - NERVOUS OUT OF BREATH - AGGITATED - SCARED - SUSPICIOUS - APPREHENSIVE - WORRIED - NERVOUSE
 
-**3. Angry/Confrontational Demeanor:**
-
-\- This category comprises descriptions indicating anger, aggression, or hostility.
+**3. Angry/Confrontational Demeanor:** This category comprises descriptions indicating anger, aggression, or hostility.
 
 \- UPSET - ANNOYED - ANGRY - AGITATED - AGGRESSIVE - COMBATIVE - IRATE - IRRITATED - AGGRAVATED - HOSTILE - MAD - AGGRESSIVE/NERVOUS - UNCOOPERATIVE - IRRATE - AGGRESIVE - ARGUMENTATIVE - DEFENSIVE - NON COMPLIANT
 
-**4. Confused/Disoriented Demeanor:**
-
-\- Descriptions suggesting confusion, surprise, or disorientation.
+**4. Confused/Disoriented Demeanor:** Descriptions suggesting confusion, surprise, or disorientation.
 
 \- CONFUSED - SURPRISED - SHOCKED - INTOXICATED - INTOX - ERRATIC - OUT OF BREATH
 
-**5. Indifferent Demeanor:**
-
-\- Descriptions suggesting withdrawal
+**5. Indifferent Demeanor:** Descriptions suggesting withdrawal
 
 \- INDIFFERENT - EVASIVE - TIRED
 
-**Other/Outliers (Removed):**
+Note: The following descriptions do not fit well into the above categories: Defensive (21), Laughing (16), Crying (14), Excited (14), Talkative (22) Given that the low relative frequencies (indicated in the brackets), we decided to remove them along with NAs (NA, N/A).
 
-\- Some descriptions are less common or do not fit well into the above categories.
+```{r, datacleaning_and_newvariable, message = F, warning = F}
 
-Removed Descriptions: Defensive (21), Laughing (16), Crying (14), Excited (14), Talkative (22), NA, N/A
-
-These categorizations aim to group similar demeanor descriptions together based on their emotional or behavioral context, allowing for a more concise representation suitable for further analysis using multinomial regression models.
-
-```{r, creatingcategories, message = F, warning = F}
-
-stop_and_frisk <- stop_and_frisk|>
-   mutate(category = case_when(
+stop_and_frisk_cleaned <- stop_and_frisk|>
+   mutate(demeanor_category = case_when( #categorizing demeanor
     DEMEANOR_OF_PERSON_STOPPED %in% c(
       "CALM", "NORMAL", "APPARENTLY NORMAL", "RELAXED", "QUIET","UNDERSTANDING", 
       "CALM AND COOPERATIVE", "CALM AND COMPLIANT", "CALM AND UNDERSTANDING", 
@@ -156,127 +124,147 @@ stop_and_frisk <- stop_and_frisk|>
     DEMEANOR_OF_PERSON_STOPPED %in% c(
       "INDIFFERENT", "EVASIVE", "TIRED"
       ) ~ "Indifferent Demeanor",
-    TRUE ~ "Other/Outliers"  # Default case for any other demeanor not matching the above
-  ))
+    TRUE ~ "Other/NA"  # Default case for any other demeanor not matching the above
+  )) |> 
+  select(#Selecting relevant variables
+    demeanor_category, SUSPECT_REPORTED_AGE, SUSPECT_SEX, SUSPECT_RACE_DESCRIPTION,
+    SUSPECT_HEIGHT,SUSPECT_WEIGHT, SUSPECT_BODY_BUILD_TYPE, SUSPECT_EYE_COLOR,
+    SUSPECT_HAIR_COLOR,FRISKED_FLAG, SEARCHED_FLAG, ASK_FOR_CONSENT_FLG
+    ) |> 
+  filter(demeanor_category != "Other/NA")  
+```
+
+```{r, visualizing_missingness, message = F, warning = F}
+#Visualizing Missingness in Cleaned Dataset 
+stop_and_frisk_cleaned <- stop_and_frisk_cleaned %>%
+  mutate_all(~ na_if(., "(null)"))
+library(naniar)
+vis_miss(stop_and_frisk_cleaned)
+# Among our variables of interest, no variable contains a significant amount of missing values that would require specialized handling. Therefore, for subsequent exploratory analysis, we will use listwise deletion to remove observations with missing values (NA).
+```
+
+### Exploratory Data Analysis
+
+Variable Selection
+
+```{r, categorical, message = F, warning = F}
+stop_and_frisk_cleaned |>
+  filter(!is.na(SUSPECT_RACE_DESCRIPTION)) |>
+           ggplot(aes(x = SUSPECT_RACE_DESCRIPTION, fill = demeanor_category)) +
+           geom_bar(position = "fill") +
+  labs(x = "Race Description", y = "Proportion", title = "Relationship between Race and Demeanor Category") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  
+
+stop_and_frisk_cleaned |>
+  filter(!is.na(SUSPECT_SEX)) |>
+  ggplot(aes(x = SUSPECT_SEX, fill = demeanor_category)) +
+  geom_bar(position = "fill") +
+  labs(x = "Sex", y = "Proportion", title = "Relationship between Sex and Demeanor Category") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  
+
+stop_and_frisk_cleaned |>
+  filter(!is.na(SUSPECT_BODY_BUILD_TYPE)) |>
+  ggplot(aes(x = SUSPECT_BODY_BUILD_TYPE, fill = demeanor_category)) +
+  geom_bar(position = "fill") +
+  labs(x = "Body Type", y = "Proportion", title = "Relationship between Body Type and Demeanor Category") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  
+
+stop_and_frisk_cleaned |>
+  filter(!is.na(SUSPECT_EYE_COLOR)) |>
+  ggplot(aes(x = SUSPECT_EYE_COLOR, fill = demeanor_category)) +
+  geom_bar(position = "fill") +
+  labs(x = "Eye Color", y = "Proportion", title = "Relationship between Eye Color and Demeanor Category") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  
+
+stop_and_frisk_cleaned |>
+  filter(!is.na(SUSPECT_HAIR_COLOR)) |>
+  ggplot(aes(x = SUSPECT_HAIR_COLOR, fill = demeanor_category)) +
+  geom_bar(position = "fill") +
+  labs(x = "Hair Color", y = "Proportion", title = "Relationship between Hair Color and Demeanor Category") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  
 ```
 
 ```{r}
-stop_and_frisk |>
-  count(category)
-```
-
-```{r}
-stop_and_frisk |> 
-  mutate(test = if_else(category == "Angry/Confrontational Demeanor", 1, 0)) |> 
-           ggplot(aes(x = test, fill = SUSPECT_RACE_DESCRIPTION)) + 
-           geom_bar(position = "fill") 
-
-stop_and_frisk |> 
-  mutate(test = if_else(category == "Calm/Neutral Demeanor", 1, 0)) |> 
-           ggplot(aes(x = test, fill = SUSPECT_RACE_DESCRIPTION)) + 
-           geom_bar(position = "fill") 
-
-stop_and_frisk |> 
-  mutate(test = if_else(category == "Nervous/Anxious Demeanor", 1, 0)) |> 
-           ggplot(aes(x = test, fill = SUSPECT_RACE_DESCRIPTION)) + 
-           geom_bar(position = "fill") 
-
-stop_and_frisk |> 
-  mutate(test = if_else(category == "Confused/Disoriented Demeanor", 1, 0)) |> 
-           ggplot(aes(x = test, fill = SUSPECT_RACE_DESCRIPTION)) + 
-           geom_bar(position = "fill") 
-
-stop_and_frisk |> 
-  mutate(test = if_else(category == "Indifferent Demeanor", 1, 0)) |> 
-           ggplot(aes(x = test, fill = SUSPECT_RACE_DESCRIPTION)) + 
-           geom_bar(position = "fill") 
-```
-
-```{r}
-stop_and_frisk |> 
-  mutate(test = if_else(category == "Angry/Confrontational Demeanor", 1, 0)) |> 
-           ggplot(aes(x = test, fill = SUSPECT_SEX)) + 
-           geom_bar(position = "fill") 
-
-stop_and_frisk |> 
-  mutate(test = if_else(category == "Calm/Neutral Demeanor", 1, 0)) |> 
-           ggplot(aes(x = test, fill = SUSPECT_SEX)) + 
-           geom_bar(position = "fill") 
-
-stop_and_frisk |> 
-  mutate(test = if_else(category == "Nervous/Anxious Demeanor", 1, 0)) |> 
-           ggplot(aes(x = test, fill = SUSPECT_SEX)) + 
-           geom_bar(position = "fill") 
-
-stop_and_frisk |> 
-  mutate(test = if_else(category == "Confused/Disoriented Demeanor", 1, 0)) |> 
-           ggplot(aes(x = test, fill = SUSPECT_SEX)) + 
-           geom_bar(position = "fill") 
-
-stop_and_frisk |> 
-  mutate(test = if_else(category == "Indifferent Demeanor", 1, 0)) |> 
-           ggplot(aes(x = test, fill = SUSPECT_SEX)) + 
-           geom_bar(position = "fill") 
-```
-
-```{r}
-stop_and_frisk <- stop_and_frisk |>
-  filter(category != "Other/Outliers")  |>
+stop_and_frisk_cleaned <- stop_and_frisk_cleaned |> 
   mutate(SUSPECT_REPORTED_AGE = as.numeric(SUSPECT_REPORTED_AGE), 
-         SUSPECT_HEIGHT = as.numeric(SUSPECT_HEIGHT))
-  
+         SUSPECT_HEIGHT = as.numeric(SUSPECT_HEIGHT), 
+         SUSPECT_WEIGHT = as.numeric(SUSPECT_WEIGHT)
+         )
+
+ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SUSPECT_REPORTED_AGE, fill = demeanor_category)) +
+  geom_boxplot() +
+  labs(x = "Demeanor Category", y = "Suspect Age", title = "Distribution of Suspect Age by Demeanor Category") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SUSPECT_WEIGHT, fill = demeanor_category)) +
+  geom_boxplot() +
+  labs(x = "Demeanor Category", y = "Suspect Age", title = "Distribution of Suspect Age by Demeanor Category") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SUSPECT_HEIGHT, fill = demeanor_category)) +
+  geom_boxplot() +
+  labs(x = "Demeanor Category", y = "Suspect Age", title = "Distribution of Suspect Age by Demeanor Category") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+#stop_and_frisk |> 
+ # ggplot(aes(x = FRISKED_FLAG, fill = category)) + 
+#  geom_bar(position = "fill")
+
+#stop_and_frisk |> 
+ # ggplot(aes(x = SEARCHED_FLAG, fill = category)) + 
+ # geom_bar(position = "fill")
+
+#stop_and_frisk |> 
+ # ggplot(aes(x = ASK_FOR_CONSENT_FLG, fill = category)) + 
+ # geom_bar(position = "fill")
+```
+
+## Methodology:
+
+Multinomial Regression Model
+
+Irrelevance of Independent Alternatives Assumption:
+
+```{r}
 library(nnet)
-mtest <- multinom(category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION +  SUSPECT_HEIGHT + SUSPECT_BODY_BUILD_TYPE + SUSPECT_HAIR_COLOR, data = stop_and_frisk)
-
-summary(mtest) 
+# Set calm/neutral as baseline
+mtest <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned)
 ```
 
-nested test??
+Assessing multicolinearity & interactions:
+
+Linear relationship between continuous variables and the logit transformation of the outcome variable:
+
+## Result
 
 ```{r}
-  z <- summary(mtest)$coefficients/summary(mtest)$standard.errors
+#Model Display 
+```
+
+```{r}
+#Statistical Significance
+#  z <- summary(mtest)$coefficients/summary(mtest)$standard.errors
   # 2-tailed Wald z tests to test significance of coefficients
-  p <- (1 - pnorm(abs(z), 0, 1)) * 2
+ # p <- (1 - pnorm(abs(z), 0, 1)) * 2
 ```
 
 ```{r}
-stop_and_frisk |> 
-  ggplot(aes(x = FRISKED_FLAG, fill = category)) + 
-  geom_bar(position = "fill")
-
-stop_and_frisk |> 
-  ggplot(aes(x = SEARCHED_FLAG, fill = category)) + 
-  geom_bar(position = "fill")
-
-stop_and_frisk |> 
-  ggplot(aes(x = ASK_FOR_CONSENT_FLG, fill = category)) + 
-  geom_bar(position = "fill")
 
 ```
+
+**Key Interpretations:**
+
+The model fit is clearly assessed, and interesting findings from the model are clearly described. Interpretations of model coefficients are used to support the key findings and conclusions, rather than merely listing the interpretation of every model coefficient. If the primary modeling objective is prediction, the model\'s predictive power is thoroughly assessed.
+
+## Discussion
+
+Overall conclusions from analysis are clearly described, and the model results are put into the larger context of the subject matter and original research question. There is thoughtful consideration of potential limitations of the data and/or analysis, and ideas for future work are clearly described.
 
 Pattern
 
-Visualizing missingness
-
-Clean dataset
-
-Select Variables
-
-Set calm/neutral as baseline
-
 Evaluate Model - testing + training
-
-Assumption - independence & alternative
-
-Do a logistic model: "calm" ""
-
-```{r}
-install.packages("naniar")
-library(visdat)
-stop_and_frisk <- stop_and_frisk |>
-  select(category, SUSPECT_REPORTED_AGE, SUSPECT_SEX, SUSPECT_RACE_DESCRIPTION, SUSPECT_HEIGHT, SUSPECT_WEIGHT, SUSPECT_BODY_BUILD_TYPE, SUSPECT_EYE_COLOR, SUSPECT_HAIR_COLOR)
-vis_miss(stop_and_frisk)
-```
 
 limitations:
 
@@ -286,14 +274,4 @@ limitations:
 
 \-"reported age", weight - rather arbitrary when considering what's a "physical characteristic"
 
-## Methodology
-
-### Justification for Multinomial Regression Model
-
-### Model Assumptions Diagnosis
-
-### Interactions
-
-## Result
-
-## Discussion
+promportions + numbers
