@@ -13,15 +13,67 @@ library(readxl)
 stop_and_frisk <- read_excel("2023_nypd_stop_and_frisk_data.xlsx")
 ```
 
-## Dataset:
+## Introduction:
 
-Source: https://www.nyc.gov/site/nypd/stats/reports-analysis/stopfrisk.page
+### Background:
 
-Every time a police officer stops a person in NYC, the officer *is supposed to* fill out a form recording the details of the stop. The forms were filled out by hand and manually entered into an NYPD database until 2017, when the forms became electronic. The NYPD reports stop-and-frisk data in two ways: a summary report released quarterly and a complete database released annually to the public.
+The stop-and-frisk program in New York City, administered by the NYPD, allows officers to detain, question, and potentially search individuals suspected of carrying weapons or contraband. This initiative has sparked significant controversy due to concerns of racial profiling. In 2017, 90% of those stopped were African-American or Latino, primarily aged between 14 and 24. Despite efforts to address racial disparities, such as policy reforms, the disproportionate impact of the stop-and-frisk program persists, highlighting potential underlying factors like implicit bias.
 
-The annual database includes nearly all of the data recorded by the police officer after a stop such as the age of the person stopped, if a person was frisked, if there was a weapon or firearm recovered, if physical force was used, and the exact location of the stop within the precinct, etc.
+Implicit bias, also known as implicit prejudice or implicit attitude, is a negative attitude, of which one is not consciously aware, against a specific social group. It is thought to be shaped by experience and based on learned associations between particular qualities and social categories, including race and/gender/age etc. Individuals' perceptions and behaviors can be influenced by the implicit biases they hold, even if they are unaware they hold such biases.
 
-Physical characteristics -\> police officer perception & reactions?
+### Dataset:
+
+Each stop made by the NYPD requires officers to complete a detailed form, documenting various aspects of the encounter. Since 2017, these forms have been electronically recorded and stored in an NYPD database. The dataset contains information such as the stop's location, officer details, characteristics of the stopped individual (including age, race, gender, etc.), frisk/search details, and the officer's description of the individual's demeanor during the stop.
+
+Our analysis will utilize the most recently released NYPD annual report from the source: https://www.nyc.gov/site/nypd/stats/reports-analysis/stopfrisk.page, containing 82 variables and 16,871 observations.
+
+### Project Motivation & Research Question:
+
+Among the 82 variables, a variable of particular interest is "demeanor of person stopped" - where the police utilize 1 - 2 adjectives to describe stop subject "demeanor". Common adjectives include "calm", "nervous", "agitated", "aggressive", etc. It should be noted that these descriptions are self-generated instead of the police choosing from a pre-defined set of adjectives. We propose that these "demeanor" adjectives are indicative of the police officers' perception of the stopped subject.
+
+This project aims to investigate the relationship between physical/demographical characteristics of stopped individuals and the demeanor adjectives assigned by police officers. Specifically, we will explore:
+
+-   How do officer-assigned demeanor adjectives vary across different demographic groups (age, race, gender)?
+-   Are there correlations between certain physical characteristics and the types of demeanor descriptions used by officers during stops?
+-   Additionally, we will briefly examine whether demeanor descriptions influence subsequent police behaviors, such as frisking, searching, or requesting consent.
+
+By analyzing these relationships, we seek to shed light on potential implicit biases affecting police interactions during stop-and-frisk encounters. Understanding these dynamics is crucial for addressing systemic biases and ensuring fair and equitable policing practices.
+
+### Variables Introduction:
+
+**Predictor variables of interest:**
+
+SUSPECT_REPORTED_AGE (chr and transformed to num): the age of suspect
+
+SUSPECT_SEX (chr): female or male
+
+SUSPECT_RACE_DESCRIPTION (chr): includes 7 categories: American Indian/Alaskan Native, Asian/Pacific Islander, Black, Black Hispanic, Middle Eastern/Southwest Asian, White, White Hispanic
+
+SUSPECT_HEIGHT (chr and transformed to num): the height of suspect by feet
+
+SUSPECT_WEIGHT (chr and transformed to num): the weight of suspect by pounds
+
+SUSPECT_BODY_BUILD_TYPE (chr): includes categories: HEA(Heavy), MED(Medium), THN(Thin), U(Unknown), XXX(body type not applicable/placeholder value indicating missing data)
+
+SUSPECT_EYE_COLOR (chr): includes categories: BLK(Black), BLU(Blue), BRO(Brown), GRN(Green), GRY(Grey), HAZ(Hazel), MUL(Multicolored), OTH(Other), PNK(Pink)
+
+SUSPECT_HAIR_COLOR (chr): includes categories: BLD (Bald), BLK (Black), BLN (Blonde), BRO (Brown), GRN(Green), GRY (Gray), ORG (Orange), PLE (Purple), PNK(Pink), RED(Red), SDY(Sandy), WHI (White), XXX (Unknown/Unspecified - often used when the suspect's hair color is not recorded or unclear), ZZZ (could be an unusual or placeholder value indicating an error or missing data).
+
+Note: The interpretation of categorical variables is based on conventions and assumptions due to the absence of a specific codebook for the dataset. Numeric variables (age, height, weight) are obtained through suspect report, while other categorical variables may reflect subjective perceptions of police or suspect report.
+
+**Variables of interest for exploratory analysis:**
+
+FRISKED_FLAG (chr): indicates whether or not the suspect was frisked (N = No, Y = Yes)
+
+SEARCH_FLAG (chr): indicates whether or not the suspect was searched (N = No, Y = Yes)
+
+ASK_FOR_CONSENT_FLG (chr): indicates whether the police asked for subject consent for the frisk/search behaviors after stop (N = No, Y = Yes)
+
+### Data Cleaning & New Variable Creation
+
+### Exploratory Data Analysis
+
+### 
 
 ```{r}
 demeanor_types <- stop_and_frisk |> 
@@ -44,31 +96,31 @@ We'll group them as follows:
 
 \- This category includes descriptions indicating a relaxed, cooperative, or normal state of mind.
 
-\- CALM - NORMAL - APPARENTLY NORMAL - RELAXED - QUIET - UNDERSTANDING - CALM AND COOPERATIVE - CALM AND COMPLIANT - CALM AND UNDERSTANDING - CALM COOPERATIVE - CALMED - NEUTRAL - LAUGHING - CALM COMPLIANT - CALM UNDERSTANDING  - APP NORMAL  - COMPLIANT  - APPARENT NORMAL
+\- CALM - NORMAL - APPARENTLY NORMAL - RELAXED - QUIET - UNDERSTANDING - CALM AND COOPERATIVE - CALM AND COMPLIANT - CALM AND UNDERSTANDING - CALM COOPERATIVE - CALMED - NEUTRAL - CALM COMPLIANT - CALM UNDERSTANDING - APP NORMAL - COMPLIANT - APPARENT NORMAL
 
 **2. Nervous/Anxious Demeanor:**
 
 \- Descriptions reflecting anxiety, nervousness, or apprehension.
 
-\- NERVOUS - ANXIOUS - VERY NERVOUS - EXTREMELY NERVOUS - PHYSICALLY NERVOUS - NERVOUS SCARED - NERVOUS OUT OF BREATH - AGGITATED  - SCARED  - SUSPICIOUS - APPREHENSIVE
+\- NERVOUS - ANXIOUS - VERY NERVOUS - EXTREMELY NERVOUS - PHYSICALLY NERVOUS - NERVOUS SCARED - NERVOUS OUT OF BREATH - AGGITATED - SCARED - SUSPICIOUS - APPREHENSIVE - WORRIED - NERVOUSE
 
 **3. Angry/Confrontational Demeanor:**
 
 \- This category comprises descriptions indicating anger, aggression, or hostility.
 
-\- UPSET - ANNOYED - ANGRY - AGITATED - AGGRESSIVE - COMBATIVE - IRATE - IRRITATED - AGGRAVATED - HOSTILE - MAD - AGGRESSIVE/NERVOUS - UNCOOPERATIVE - IRRATE  - AGGRESIVE - ARGUMENTATIVE  - DEFENSIVE - WORRIED - NON COMPLIANT
+\- UPSET - ANNOYED - ANGRY - AGITATED - AGGRESSIVE - COMBATIVE - IRATE - IRRITATED - AGGRAVATED - HOSTILE - MAD - AGGRESSIVE/NERVOUS - UNCOOPERATIVE - IRRATE - AGGRESIVE - ARGUMENTATIVE - DEFENSIVE - NON COMPLIANT
 
 **4. Confused/Disoriented Demeanor:**
 
 \- Descriptions suggesting confusion, surprise, or disorientation.
 
-\- CONFUSED - SURPRISED - SHOCKED  - INTOXICATED  - INTOX - ERRATIC - OUT OF BREATH
+\- CONFUSED - SURPRISED - SHOCKED - INTOXICATED - INTOX - ERRATIC - OUT OF BREATH
 
 **5. Indifferent Demeanor:**
 
 \- Descriptions suggesting withdrawal
 
-\- INDIFFERENT - EVASIVE - TIRED  - NERVOUSE
+\- INDIFFERENT - EVASIVE - TIRED
 
 **Other/Outliers (Removed):**
 
@@ -82,16 +134,28 @@ These categorizations aim to group similar demeanor descriptions together based 
 
 stop_and_frisk <- stop_and_frisk|>
    mutate(category = case_when(
-    DEMEANOR_OF_PERSON_STOPPED %in% c("CALM", "NORMAL", "APPARENTLY NORMAL", "RELAXED", "QUIET",
-                    "UNDERSTANDING", "CALM AND COOPERATIVE", "CALM AND COMPLIANT",
-                    "CALM AND UNDERSTANDING", "CALM COOPERATIVE", "CALMED", "NEUTRAL",
-                    "LAUGHING", "CALM COMPLIANT", "CALM UNDERSTANDING") ~ "Calm/Neutral Demeanor",
-    DEMEANOR_OF_PERSON_STOPPED %in% c("NERVOUS", "ANXIOUS", "VERY NERVOUS", "EXTREMELY NERVOUS",
-                    "PHYSICALLY NERVOUS", "NERVOUS SCARED", "NERVOUS OUT OF BREATH") ~ "Nervous/Anxious Demeanor",
-    DEMEANOR_OF_PERSON_STOPPED %in% c("UPSET", "ANNOYED", "ANGRY", "AGITATED", "AGGRESSIVE", "COMBATIVE",
-                    "IRATE", "IRRITATED", "AGGRAVATED", "HOSTILE", "MAD", "AGGRESSIVE/NERVOUS") ~ "Angry/Confrontational Demeanor",
-    DEMEANOR_OF_PERSON_STOPPED %in% c("CONFUSED", "SURPRISED", "SHOCKED") ~ "Confused/Disoriented Demeanor",
-    DEMEANOR_OF_PERSON_STOPPED %in% c("INDIFFERENT") ~ "Indifferent Demeanor",
+    DEMEANOR_OF_PERSON_STOPPED %in% c(
+      "CALM", "NORMAL", "APPARENTLY NORMAL", "RELAXED", "QUIET","UNDERSTANDING", 
+      "CALM AND COOPERATIVE", "CALM AND COMPLIANT", "CALM AND UNDERSTANDING", 
+      "CALM COOPERATIVE", "CALMED", "NEUTRAL", "CALM COMPLIANT", "CALM UNDERSTANDING", 
+      "APP NORMAL", "COMPLIANT", "APPARENT NORMAL"
+      ) ~ "Calm/Neutral Demeanor",
+    DEMEANOR_OF_PERSON_STOPPED %in% c(
+      "NERVOUS", "ANXIOUS", "VERY NERVOUS", "EXTREMELY NERVOUS","PHYSICALLY NERVOUS", 
+      "NERVOUS SCARED", "NERVOUS OUT OF BREATH", "AGGITATED", "SCARED", "SUSPICIOUS", 
+      "APPREHENSIVE", "WORRIED", "NERVOUSE"
+      ) ~ "Nervous/Anxious Demeanor",
+    DEMEANOR_OF_PERSON_STOPPED %in% c(
+      "UPSET", "ANNOYED", "ANGRY", "AGITATED", "AGGRESSIVE", "COMBATIVE", "IRATE", 
+      "IRRITATED", "AGGRAVATED", "HOSTILE", "MAD", "AGGRESSIVE/NERVOUS", "UNCOOPERATIVE", 
+      "IRRATE", "AGGRESSIVE", "ARGUMENTATIVE", "DEFENSIVE", "NON COMPLIANT"
+      ) ~ "Angry/Confrontational Demeanor",
+    DEMEANOR_OF_PERSON_STOPPED %in% c(
+      "CONFUSED", "SURPRISED", "SHOCKED", "INTOXICATED", "INTOX", "ERRATIC", "OUT OF BREATH"
+      ) ~ "Confused/Disoriented Demeanor",
+    DEMEANOR_OF_PERSON_STOPPED %in% c(
+      "INDIFFERENT", "EVASIVE", "TIRED"
+      ) ~ "Indifferent Demeanor",
     TRUE ~ "Other/Outliers"  # Default case for any other demeanor not matching the above
   ))
 ```
@@ -127,3 +191,109 @@ stop_and_frisk |>
            ggplot(aes(x = test, fill = SUSPECT_RACE_DESCRIPTION)) + 
            geom_bar(position = "fill") 
 ```
+
+```{r}
+stop_and_frisk |> 
+  mutate(test = if_else(category == "Angry/Confrontational Demeanor", 1, 0)) |> 
+           ggplot(aes(x = test, fill = SUSPECT_SEX)) + 
+           geom_bar(position = "fill") 
+
+stop_and_frisk |> 
+  mutate(test = if_else(category == "Calm/Neutral Demeanor", 1, 0)) |> 
+           ggplot(aes(x = test, fill = SUSPECT_SEX)) + 
+           geom_bar(position = "fill") 
+
+stop_and_frisk |> 
+  mutate(test = if_else(category == "Nervous/Anxious Demeanor", 1, 0)) |> 
+           ggplot(aes(x = test, fill = SUSPECT_SEX)) + 
+           geom_bar(position = "fill") 
+
+stop_and_frisk |> 
+  mutate(test = if_else(category == "Confused/Disoriented Demeanor", 1, 0)) |> 
+           ggplot(aes(x = test, fill = SUSPECT_SEX)) + 
+           geom_bar(position = "fill") 
+
+stop_and_frisk |> 
+  mutate(test = if_else(category == "Indifferent Demeanor", 1, 0)) |> 
+           ggplot(aes(x = test, fill = SUSPECT_SEX)) + 
+           geom_bar(position = "fill") 
+```
+
+```{r}
+stop_and_frisk <- stop_and_frisk |>
+  filter(category != "Other/Outliers")  |>
+  mutate(SUSPECT_REPORTED_AGE = as.numeric(SUSPECT_REPORTED_AGE), 
+         SUSPECT_HEIGHT = as.numeric(SUSPECT_HEIGHT))
+  
+library(nnet)
+mtest <- multinom(category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION +  SUSPECT_HEIGHT + SUSPECT_BODY_BUILD_TYPE + SUSPECT_HAIR_COLOR, data = stop_and_frisk)
+
+summary(mtest) 
+```
+
+nested test??
+
+```{r}
+  z <- summary(mtest)$coefficients/summary(mtest)$standard.errors
+  # 2-tailed Wald z tests to test significance of coefficients
+  p <- (1 - pnorm(abs(z), 0, 1)) * 2
+```
+
+```{r}
+stop_and_frisk |> 
+  ggplot(aes(x = FRISKED_FLAG, fill = category)) + 
+  geom_bar(position = "fill")
+
+stop_and_frisk |> 
+  ggplot(aes(x = SEARCHED_FLAG, fill = category)) + 
+  geom_bar(position = "fill")
+
+stop_and_frisk |> 
+  ggplot(aes(x = ASK_FOR_CONSENT_FLG, fill = category)) + 
+  geom_bar(position = "fill")
+
+```
+
+Pattern
+
+Visualizing missingness
+
+Clean dataset
+
+Select Variables
+
+Set calm/neutral as baseline
+
+Evaluate Model - testing + training
+
+Assumption - independence & alternative
+
+Do a logistic model: "calm" ""
+
+```{r}
+install.packages("naniar")
+library(visdat)
+stop_and_frisk <- stop_and_frisk |>
+  select(category, SUSPECT_REPORTED_AGE, SUSPECT_SEX, SUSPECT_RACE_DESCRIPTION, SUSPECT_HEIGHT, SUSPECT_WEIGHT, SUSPECT_BODY_BUILD_TYPE, SUSPECT_EYE_COLOR, SUSPECT_HAIR_COLOR)
+vis_miss(stop_and_frisk)
+```
+
+limitations:
+
+-missingness
+
+-definition of categories
+
+\-"reported age", weight - rather arbitrary when considering what's a "physical characteristic"
+
+## Methodology
+
+### Justification for Multinomial Regression Model
+
+### Model Assumptions Diagnosis
+
+### Interactions
+
+## Result
+
+## Discussion
