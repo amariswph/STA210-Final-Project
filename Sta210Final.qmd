@@ -107,23 +107,23 @@ stop_and_frisk_cleaned <- stop_and_frisk|>
       "CALM AND COOPERATIVE", "CALM AND COMPLIANT", "CALM AND UNDERSTANDING", 
       "CALM COOPERATIVE", "CALMED", "NEUTRAL", "CALM COMPLIANT", "CALM UNDERSTANDING", 
       "APP NORMAL", "COMPLIANT", "APPARENT NORMAL"
-      ) ~ "Calm/Neutral Demeanor",
+      ) ~ "Calm/Neutral",
     DEMEANOR_OF_PERSON_STOPPED %in% c(
       "NERVOUS", "ANXIOUS", "VERY NERVOUS", "EXTREMELY NERVOUS","PHYSICALLY NERVOUS", 
       "NERVOUS SCARED", "NERVOUS OUT OF BREATH", "AGGITATED", "SCARED", "SUSPICIOUS", 
       "APPREHENSIVE", "WORRIED", "NERVOUSE"
-      ) ~ "Nervous/Anxious Demeanor",
+      ) ~ "Nervous/Anxious",
     DEMEANOR_OF_PERSON_STOPPED %in% c(
       "UPSET", "ANNOYED", "ANGRY", "AGITATED", "AGGRESSIVE", "COMBATIVE", "IRATE", 
       "IRRITATED", "AGGRAVATED", "HOSTILE", "MAD", "AGGRESSIVE/NERVOUS", "UNCOOPERATIVE", 
       "IRRATE", "AGGRESSIVE", "ARGUMENTATIVE", "DEFENSIVE", "NON COMPLIANT"
-      ) ~ "Angry/Confrontational Demeanor",
+      ) ~ "Angry/Confrontational",
     DEMEANOR_OF_PERSON_STOPPED %in% c(
       "CONFUSED", "SURPRISED", "SHOCKED", "INTOXICATED", "INTOX", "ERRATIC", "OUT OF BREATH"
-      ) ~ "Confused/Disoriented Demeanor",
+      ) ~ "Confused/Disoriented",
     DEMEANOR_OF_PERSON_STOPPED %in% c(
       "INDIFFERENT", "EVASIVE", "TIRED"
-      ) ~ "Indifferent Demeanor",
+      ) ~ "Indifferent",
     TRUE ~ "Other/NA"  # Default case for any other demeanor not matching the above
   )) |> 
   select(#Selecting relevant variables
@@ -198,65 +198,144 @@ ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SUSPECT_REP
 
 ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SUSPECT_WEIGHT, fill = demeanor_category)) +
   geom_boxplot() +
-  labs(x = "Demeanor Category", y = "Suspect Age", title = "Distribution of Suspect Age by Demeanor Category") + 
+  labs(x = "Demeanor Category", y = "Suspect Age", title = "Distribution of Suspect Weight by Demeanor Category") + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SUSPECT_HEIGHT, fill = demeanor_category)) +
   geom_boxplot() +
-  labs(x = "Demeanor Category", y = "Suspect Age", title = "Distribution of Suspect Age by Demeanor Category") + 
+  labs(x = "Demeanor Category", y = "Suspect Age", title = "Distribution of Suspect Height by Demeanor Category") + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+Variable Selection Reasoning:
+
 ```{r}
-#stop_and_frisk |> 
- # ggplot(aes(x = FRISKED_FLAG, fill = category)) + 
-#  geom_bar(position = "fill")
+#maybe move this forward 
+stop_and_frisk_cleaned |> 
+  ggplot(aes(x = demeanor_category, fill = FRISKED_FLAG)) + 
+  geom_bar(position = "fill") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-#stop_and_frisk |> 
- # ggplot(aes(x = SEARCHED_FLAG, fill = category)) + 
- # geom_bar(position = "fill")
+stop_and_frisk_cleaned |> 
+  ggplot(aes(x = demeanor_category, fill = SEARCHED_FLAG)) + 
+  geom_bar(position = "fill") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-#stop_and_frisk |> 
- # ggplot(aes(x = ASK_FOR_CONSENT_FLG, fill = category)) + 
- # geom_bar(position = "fill")
+stop_and_frisk_cleaned |> 
+  ggplot(aes(x = demeanor_category, fill = ASK_FOR_CONSENT_FLG)) + 
+  geom_bar(position = "fill") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+
+Interpretation:
 
 ## Methodology:
 
-Multinomial Regression Model
+**Why Multinomial Regression Model?**
 
-Irrelevance of Independent Alternatives Assumption:
+The primary variable of interest, "demeanor category", consists of groups of categorical descriptors that are assigned by police officers. These descriptors are neither ordinal (they simply represent clusters of adjectives with similar characteristics) nor binary (e.g., calm vs. not calm) but rather fall into multiple distinct categories.
+
+Multinomial regression allows us to assess how demographic/physical appearance predictors influence the likelihood of being assigned different demeanor categories compared to a reference category (set as calm/neutral). We can interpret the model coefficients to understand the direction and magnitude of these relationships.
 
 ```{r}
 library(nnet)
 # Set calm/neutral as baseline
+stop_and_frisk_cleaned$demeanor_category <- factor(stop_and_frisk_cleaned$demeanor_category, levels = c("Calm/Neutral", "Nervous/Anxious", "Angry/Confrontational", "Confused/Disoriented", "Indifferent"))
 mtest <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned)
+
 ```
 
-Assessing multicolinearity & interactions:
+**Assessing multicolinearity & interactions:**
 
-Linear relationship between continuous variables and the logit transformation of the outcome variable:
+Excluding incidents of hair dye and contact lenses, basing off common sense, we suspect a multicolinearity between race and eye color or hair color. Eye color and hair color also contain 9 and 14 categories respectively, largely complicating the coefficient displays of our model.
+
+```{r}
+stop_and_frisk_cleaned$demeanor_category <- factor(stop_and_frisk_cleaned$demeanor_category, levels = c("Calm/Neutral", "Nervous/Anxious", "Angry/Confrontational", "Confused/Disoriented", "Indifferent"))
+stop_and_frisk_cleaned <- na.omit(stop_and_frisk_cleaned)
+
+mtest1 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION, data = stop_and_frisk_cleaned)
+
+mtest2 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR, data = stop_and_frisk_cleaned)
+
+mtest3 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned)
+
+anova_result1 <- anova(mtest1, mtest2, mtest3)
+
+mtest4 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned)
+
+anova_result2 <- anova(mtest1, mtest4)
+```
+
+**Interpretation**:
+
+Model 1 vs. Model 2 (adding suspect eye color to race):
+
+-   **P-value (Pr(Chi))**: 0.14621930
+
+    -   The p-value (0.14621930) suggests that adding **`SUSPECT_EYE_COLOR`** to the model (from Model 1 to Model 2) does not result in a statistically significant improvement in model fit (at the conventional significance level of 0.05).
+
+Model 2 vs. Model 3 (adding suspect hair color to eye color & race):
+
+-   **P-value (Pr(Chi))**: 0.02794697
+
+    -   The p-value (0.02794697) indicates that adding **`SUSPECT_HAIR_COLOR`** to the model (from Model 2 to Model 3) results in a statistically significant improvement in model fit (at the conventional significance level of 0.05).
+
+Model 1 vs. Model 4 (adding suspect hair color to race):
+
+-   **P-value (Pr(Chi))**: 0.03577523
+
+    -   The p-value (0.02794697) indicates that adding **`SUSPECT_HAIR_COLOR`** to the model results in a statistically significant improvement in model fit (at the conventional significance level of 0.05).
+
+**We decided to delete "hair color" from the predictor variables.**
+
+**Assumption Diagnostics**
+
+**Irrelevance of Independent Alternatives Assumption?**
+
+The IIA assumption implies that the relative preference or probability of choosing one category over another is independent of the presence or characteristics of other categories in the choice set. For example the probability of police assigning an individual of given demographic/physical appearance to "Calm/neutral" over "Nervous/Anxious" is independent from the presence/absence of the category "Indifferent".
+
+**Linear relationship between continuous variables and the logit transformation of the outcome variable?**
+
+```{r}
+install.packages("devtools")
+devtools::install_github("statmanrobin/Stat2Data")
+library(Stat2Data)
+  emplogitplot1(demeanor_category ~ SUSPECT_REPORTED_AGE,
+                data = stop_and_frisk_cleaned,
+                ngroups = 10,
+                main = "Linearity satisfied for log-odd demeanor_category and SUSPECT_REPORTED_AGE"
+                )
+```
 
 ## Result
 
 ```{r}
-#Model Display 
+mfinal <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned)
+
+summary(mfinal)
 ```
 
 ```{r}
-#Statistical Significance
-#  z <- summary(mtest)$coefficients/summary(mtest)$standard.errors
-  # 2-tailed Wald z tests to test significance of coefficients
- # p <- (1 - pnorm(abs(z), 0, 1)) * 2
-```
+#Statistical Significance? 
 
-```{r}
+coefficients_final <- coef(mfinal)
+standard_errors_final <- sqrt(diag(vcov(mfinal))) 
+
+z <- coefficients_final/ standard_errors_final
+p <- (1 - pnorm(abs(z), 0, 1)) * 2
+
+
+print(p)
 
 ```
 
 **Key Interpretations:**
 
-The model fit is clearly assessed, and interesting findings from the model are clearly described. Interpretations of model coefficients are used to support the key findings and conclusions, rather than merely listing the interpretation of every model coefficient. If the primary modeling objective is prediction, the model\'s predictive power is thoroughly assessed.
+Overall trend in model:
+
+Criteria - Salient Slope + Statistical Significance:
+
+Note: Primary objective is prediction, so we will not be assessing model predictive power through CV tests.
 
 ## Discussion
 
@@ -268,10 +347,26 @@ Evaluate Model - testing + training
 
 limitations:
 
--missingness
+-missingness - excluding a huge proportion of data...
 
 -definition of categories
 
 \-"reported age", weight - rather arbitrary when considering what's a "physical characteristic"
 
-promportions + numbers
+proportions + numbers (problem with representation)
+
+variable selection process - based on visualizations
+
+incomplete understanding of dataset
+
+e.g., potential violation of independence
+
+Ideas for future work:
+
+more focus on behavior vs. characteristics
+
+explore other behavior variables
+
+implicit bias is hard to measure
+
+less focused aspects like hair color + extending to accessory + outfits? (detailed description variable)
