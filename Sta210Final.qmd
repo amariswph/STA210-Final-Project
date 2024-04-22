@@ -450,7 +450,7 @@ library(Stat2Data)
 
 Code Chunk Demo:
 
-mfinal \<- multinom(demeanor_category \~ SUSPECT_REPORTED_AGE \* SUSPECT_RACE_DESCRIPTION + SUSPECT_SEX \* SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned
+mfinal \<- multinom(demeanor_category \~ SUSPECT_REPORTED_AGE \* SUSPECT_RACE_DESCRIPTION + SUSPECT_SEX \* SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned)
 
 ![](Screenshot%202024-04-22%20at%2010.52.51.png)
 
@@ -480,28 +480,18 @@ These observations highlight significant trends in the relationship between offi
 
 ## Discussion
 
-Limitations:
+Our exploration underscores the significant influence of suspect demographic characteristics, particularly race and sex, on how police officers assign demeanor adjectives during stops. We observed statistically significant coefficients indicating differential odds of being described with certain demeanor traits based on race and sex. For instance, being a Black Hispanic female versus an Asian/Pacific Islander female has significant differences in the likelihood of being characterized as confused/disoriented compared with calm/neutral. Similarly, being a female Eastern/Southwest Asian versus a male of the same race showed drastic differences in the likelihood of being characterized as "nervous/anxious" or "angry/confrontational."
 
--missingness - excluding a huge proportion of data...
+While concrete inferences should not be drawn, underlying stereotypes of different demographic groups could potentially contribute to these differential demeanor descriptions. For example, Eastern/Southwest Asian females are commonly portrayed in media as more levelheaded, compliant, and cooperative, whereas males are often perceived as more confrontational and aggressive. These stereotypes have the potential to subtly impact police perceptions and behaviors, even when the officer is not consciously aware at the moment.
 
--definition of categories
+Overall, our analysis provides insights into how implicit biases may manifest in police interactions, influencing the perceptions and subsequent actions of officers during stop-and-frisk encounters. By examining correlations between physical/demographic characteristics and demeanor descriptions, we begin to unpack the underlying factors contributing to disparities observed in policing practices.
 
-\-"reported age", weight - rather arbitrary when considering what's a "physical characteristic"
+Nevertheless, our exploration has several key limitations.
 
-proportions + numbers (problem with representation)
+First, while the original dataset includes over 16,000 observations, the cleaned dataset we worked with consists of 10,497 observations. Some observations (approximately 4% according to our missingness visualization) were also removed when necessary in subsequent modeling due to their incomplete nature. The loss of a significant proportion of the data could undermine the representativeness of our conclusions.
 
-variable selection process - based on visualizations
+"Demeanor Categories" were used to facilitate multinomial modeling and ease interpretation of the data. While we attempted to create adjective clusters based on semantic similarities, the categories remain rather arbitrary. Some adjectives could belong to multiple categories, and the categories exclude a large proportion of potentially useful data that failed to fit in. Our initial variable screening was based on simple data visualization and may have accidentally excluded significant predictor variables.
 
-incomplete understanding of dataset
+Our incomplete understanding of the dataset also posed challenges. We are uncertain of the exact data collection process---for example, whether variables such as "race description" are obtained through suspect reports or police perception. The collection method could significantly influence our interpretations regarding whether "implicit bias" is at work. Additionally, we made the assumption that demeanor adjectives to some extent are indicative of "police perception of the suspect." Lastly, while our dataset reasonably satisfied the assumption of independence (each unique police stop), we lack knowledge regarding whether observations are dependent on each other, such as being produced by the same officer.
 
-e.g., potential violation of independence
-
-Ideas for future work:
-
-more focus on behavior vs. characteristics
-
-explore other behavior variables
-
-implicit bias is hard to measure
-
-less focused aspects like hair color + extending to accessory + outfits? (detailed description variable)
+While our exploration aimed to assess both demographic and physical characteristics of subjects, most "physical" characteristic predictors were eliminated during the process due to their complexity or lack of statistical significance. Future analysis could expand beyond sex and race to include more nuanced physical characteristics such as hair color or dressing style. The original dataset contained a variable called "other description" that captures physical appearances such as clothing color and style---this variable was excluded due to its complexity. Future exploration could also delve deeper into other police behavior-related variables (questioning, duration of stop, etc.).
