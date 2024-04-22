@@ -16,7 +16,7 @@ ggthemr('fresh')
 stop_and_frisk <- read_excel("2023_nypd_stop_and_frisk_data.xlsx")
 ```
 
-## Introduction:
+## Introduction
 
 ### Background:
 
@@ -26,13 +26,11 @@ Implicit bias, also known as implicit prejudice or implicit attitude, is a negat
 
 ### Dataset:
 
-Each stop made by the NYPD requires officers to complete a detailed form, documenting various aspects of the encounter. Since 2017, these forms have been electronically recorded and stored in an NYPD database. The dataset contains information such as the stop's location, officer details, characteristics of the stopped individual (including age, race, gender, etc.), frisk/search details, and the officer's description of the individual's demeanor during the stop.
-
-Our analysis will utilize the most recently released NYPD annual report from the source: https://www.nyc.gov/site/nypd/stats/reports-analysis/stopfrisk.page, containing 82 variables and 16,871 observations.
+Each stop made by the NYPD requires officers to complete a detailed form, documenting various aspects of the encounter. Since 2017, these forms have been electronically recorded and stored in an NYPD database. The dataset contains information such as the stop's location, officer details, characteristics of the stopped individual (including age, race, gender, etc.), frisk/search details, and the officer's description of the individual's demeanor during the stop. Our analysis will utilize the most recently released NYPD annual report from the source: https://www.nyc.gov/site/nypd/stats/reports-analysis/stopfrisk.page, containing 82 variables and 16,871 observations.
 
 ### Project Motivation & Research Question:
 
-Among the 82 variables, a variable of particular interest is "demeanor of person stopped" - where the police utilize 1 - 2 adjectives to describe stop subject "demeanor". Common adjectives include "calm", "nervous", "agitated", "aggressive", etc. It should be noted that these descriptions are self-generated instead of the police choosing from a pre-defined set of adjectives. We propose that these "demeanor" adjectives are indicative of the police officers' perception of the stopped subject.
+Among the 82 variables, a variable of particular interest is "demeanor of person stopped" - where the police utilize 1 - 2 adjectives to describe stop subject "demeanor". Common adjectives include "calm", "nervous", "agitated", "aggressive", etc. These descriptions are self-generated instead of the police choosing from a pre-defined set of adjectives. We propose that these "demeanor" adjectives are indicative of the police officers' perception of the stopped subject.
 
 This project aims to investigate the relationship between physical/demographic characteristics of stopped individuals and the demeanor adjectives assigned by police officers. Specifically, we will explore:
 
@@ -76,25 +74,15 @@ ASK_FOR_CONSENT_FLG (chr): indicates whether the police asked for subject consen
 
 Upon reviewing the dataset, we identified a total of 1589 unique demeanor descriptions. To streamline our analysis, we focused on demeanor descriptions that appeared 10 or more times, aiming to capture meaningful trends and patterns. We then categorized these 69 demeanor descriptions into 5 broader categories based on their semantic similarities. While we recognize that the categorizations can be rather arbitrary, the groupings based on similarities in emotional or behavioral context allows for a more concise representation suitable for further analysis.
 
-**1. Calm/Neutral Demeanor:** This category includes descriptions indicating a relaxed, cooperative, or normal state of mind.
+**1. Calm/Neutral Demeanor:** This category includes descriptions indicating a relaxed, cooperative, or normal state of mind: - CALM - NORMAL - APPARENTLY NORMAL - RELAXED - QUIET - UNDERSTANDING - CALM AND COOPERATIVE - CALM AND COMPLIANT - CALM AND UNDERSTANDING - CALM COOPERATIVE - CALMED - NEUTRAL - CALM COMPLIANT - CALM UNDERSTANDING - APP NORMAL - COMPLIANT - APPARENT NORMAL
 
-\- CALM - NORMAL - APPARENTLY NORMAL - RELAXED - QUIET - UNDERSTANDING - CALM AND COOPERATIVE - CALM AND COMPLIANT - CALM AND UNDERSTANDING - CALM COOPERATIVE - CALMED - NEUTRAL - CALM COMPLIANT - CALM UNDERSTANDING - APP NORMAL - COMPLIANT - APPARENT NORMAL
+**2. Nervous/Anxious Demeanor:** Descriptions reflecting anxiety, nervousness, or apprehension : - NERVOUS - ANXIOUS - VERY NERVOUS - EXTREMELY NERVOUS - PHYSICALLY NERVOUS - NERVOUS SCARED - NERVOUS OUT OF BREATH - AGGITATED - SCARED - SUSPICIOUS - APPREHENSIVE - WORRIED - NERVOUSE
 
-**2. Nervous/Anxious Demeanor:** Descriptions reflecting anxiety, nervousness, or apprehension.
+**3. Angry/Confrontational Demeanor:** This category comprises descriptions indicating anger, aggression, or hostility: - UPSET - ANNOYED - ANGRY - AGITATED - AGGRESSIVE - COMBATIVE - IRATE - IRRITATED - AGGRAVATED - HOSTILE - MAD - AGGRESSIVE/NERVOUS - UNCOOPERATIVE - IRRATE - AGGRESIVE - ARGUMENTATIVE - DEFENSIVE - NON COMPLIANT
 
-\- NERVOUS - ANXIOUS - VERY NERVOUS - EXTREMELY NERVOUS - PHYSICALLY NERVOUS - NERVOUS SCARED - NERVOUS OUT OF BREATH - AGGITATED - SCARED - SUSPICIOUS - APPREHENSIVE - WORRIED - NERVOUSE
+**4. Confused/Disoriented Demeanor:** Descriptions suggesting confusion, surprise, or disorientation : - CONFUSED - SURPRISED - SHOCKED - INTOXICATED - INTOX - ERRATIC - OUT OF BREATH
 
-**3. Angry/Confrontational Demeanor:** This category comprises descriptions indicating anger, aggression, or hostility.
-
-\- UPSET - ANNOYED - ANGRY - AGITATED - AGGRESSIVE - COMBATIVE - IRATE - IRRITATED - AGGRAVATED - HOSTILE - MAD - AGGRESSIVE/NERVOUS - UNCOOPERATIVE - IRRATE - AGGRESIVE - ARGUMENTATIVE - DEFENSIVE - NON COMPLIANT
-
-**4. Confused/Disoriented Demeanor:** Descriptions suggesting confusion, surprise, or disorientation.
-
-\- CONFUSED - SURPRISED - SHOCKED - INTOXICATED - INTOX - ERRATIC - OUT OF BREATH
-
-**5. Indifferent Demeanor:** Descriptions suggesting withdrawal
-
-\- INDIFFERENT - EVASIVE - TIRED
+**5. Indifferent Demeanor:** Descriptions suggesting withdrawal: - INDIFFERENT - EVASIVE - TIRED
 
 Note: The following descriptions do not fit well into the above categories: Defensive (21), Laughing (16), Crying (14), Excited (14), Talkative (22) Given that the low relative frequencies (indicated in the brackets), we decided to remove them along with NAs (NA, N/A).
 
@@ -132,6 +120,7 @@ stop_and_frisk_cleaned <- stop_and_frisk|>
     SUSPECT_HAIR_COLOR,FRISKED_FLAG, SEARCHED_FLAG, ASK_FOR_CONSENT_FLG
     ) |> 
   filter(demeanor_category != "Other/NA")  
+
 ```
 
 The following graph visualizes the missingess in our newly generated data set (stop_and_frisk_cleaned) consisting of our created variable "demeanor category" and other predictors variables/variables for exploratory analysis of interest:
@@ -150,7 +139,7 @@ vis_miss(stop_and_frisk_cleaned, sort_miss = TRUE) +
 
 ```
 
-\# Among our variables of interest, no variable contains a significant amount of missing values that would require specialized handling. Therefore, for subsequent exploratory analysis, we will use listwise deletion to remove observations with missing values (NA).
+Note: Among our variables of interest, no variable contains a significant amount of missing values that would require specialized handling. Therefore, for subsequent exploratory analysis, we will use listwise deletion to remove observations with missing values (NA).
 
 ### Exploratory Data Analysis
 
@@ -208,9 +197,9 @@ grid.arrange(plota, plotb, plotc, ncol = 2, top = "Categorical Predictors'Relati
 
 ```
 
-Summary:
+Summary: The stacked bar graphs accounts for the percentage of suspect in each demeanor category being frisked, searched, or asked for consent. The results do support our hypothesis, where membership to a particular membership demeanor category seems to affect "police behavior." For example, those in the calm/neutral group are least likely to be frisked and most likely to be asked for consent. This exploration supports the significance of our exploration.
 
-Variable Selection
+**Variable Selection**
 
 ```{r, categorical, message = F, warning = F, fig.width= 8, fig.height= 10, echo = F}
 
@@ -286,56 +275,59 @@ grid.arrange(plot1, plot2, plot3, plot4, plot5, ncol = 2, top = "Categorical Pre
 
 ```
 
--   
+Based on the exploration above, we exclude variable "SUSPECT_BODY_BUILD_TYPE as a potential predictor variable.
 
-    ```{r, fig.width= 6, fig.height= 6, message = F, warning = F, echo = F}
-    stop_and_frisk_cleaned <- stop_and_frisk_cleaned |> 
-      mutate(SUSPECT_REPORTED_AGE = as.numeric(SUSPECT_REPORTED_AGE), 
-             SUSPECT_HEIGHT = as.numeric(SUSPECT_HEIGHT), 
-             SUSPECT_WEIGHT = as.numeric(SUSPECT_WEIGHT)
-             )
+```{r, fig.width= 6, fig.height= 6, message = F, warning = F, echo = F}
 
-    plot6 <- ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SUSPECT_REPORTED_AGE, fill = demeanor_category)) +
-      geom_boxplot(outlier.size = 0.5) +
-      labs(x = "Demeanor Category", y = "Suspect Age", title = "Distribution of Suspect Age varies across Demanor Categories") + 
-        theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
-            axis.text.y = element_text(size = 4), 
-            axis.title = element_text(size = 4), 
-            plot.title = element_text(size = 5)) + 
-        guides(fill = FALSE)
+stop_and_frisk_cleaned <- stop_and_frisk_cleaned |> 
+  mutate(SUSPECT_REPORTED_AGE = as.numeric(SUSPECT_REPORTED_AGE), 
+         SUSPECT_HEIGHT = as.numeric(SUSPECT_HEIGHT), 
+         SUSPECT_WEIGHT = as.numeric(SUSPECT_WEIGHT)
+         )
 
-    plot7 <- ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SUSPECT_WEIGHT, fill = demeanor_category)) +
-      geom_boxplot(outlier.size = 0.5) +
-      labs(x = "Demeanor Category", y = "Suspect Age", title = "No Significant Variations in Distribution across Categories") +   
-      theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
-            axis.text.y = element_text(size = 4),  
-            axis.title = element_text(size = 4),  
-            plot.title = element_text(size = 5)
-            ) + 
-        guides(fill = FALSE)
+plot6 <- ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SUSPECT_REPORTED_AGE, fill = demeanor_category)) +
+  geom_boxplot(outlier.size = 0.5) +
+  labs(x = "Demeanor Category", y = "Suspect Age", title = "Distribution of Suspect Age varies across Demanor Categories") + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
+        axis.text.y = element_text(size = 4), 
+        axis.title = element_text(size = 4), 
+        plot.title = element_text(size = 5)) + 
+    guides(fill = FALSE)
 
-    plot8 <- ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SUSPECT_HEIGHT, fill = demeanor_category)) +
-      geom_boxplot(outlier.size = 0.5) +
-      labs(x = "Demeanor Category", y = "Suspect Age", title = "No Significant Variations in Distribution across Categories") + 
-      theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
-            axis.text.y = element_text(size = 4),  
-            axis.title = element_text(size = 4), 
-            plot.title = element_text(size = 5)) + 
-        guides(fill = FALSE)
+plot7 <- ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SUSPECT_WEIGHT, fill = demeanor_category)) +
+  geom_boxplot(outlier.size = 0.5) +
+  labs(x = "Demeanor Category", y = "Suspect Age", title = "No Significant Variations in Distribution across Categories") +   
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
+        axis.text.y = element_text(size = 4),  
+        axis.title = element_text(size = 4),  
+        plot.title = element_text(size = 5)
+        ) + 
+    guides(fill = FALSE)
 
-    grid.arrange(plot6, plot7, plot8, ncol = 2, top = "Numeric Predictors'Relationships with Demeanor Category", heights = c(2, 2))
-    ```
+plot8 <- ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SUSPECT_HEIGHT, fill = demeanor_category)) +
+  geom_boxplot(outlier.size = 0.5) +
+  labs(x = "Demeanor Category", y = "Suspect Age", title = "No Significant Variations in Distribution across Categories") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
+        axis.text.y = element_text(size = 4),  
+        axis.title = element_text(size = 4), 
+        plot.title = element_text(size = 5)) + 
+    guides(fill = FALSE)
+
+grid.arrange(plot6, plot7, plot8, ncol = 2, top = "Numeric Predictors'Relationships with Demeanor Category", heights = c(2, 2))
+```
+
+Based on the exploration above, we exclude variables "SUSPECT_WEIGHT" and "SUSPECT_HEIGHT" as potential predictor variables.
 
 ## Methodology:
 
-Initial Model (code chunk demo):
+Initial Model: mtest \<- demeanor_category \~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR + SUSPECT_HAIR_COLOR
 
-```{r, message = F, warning = F}
+```{r, message = F, warning = F, echo = F}
 library(nnet)
 # Set calm/neutral as baseline 
 stop_and_frisk_cleaned$demeanor_category <- factor(stop_and_frisk_cleaned$demeanor_category, levels = c("Calm/Neutral", "Nervous/Anxious", "Angry/Confrontational", "Confused/Disoriented", "Indifferent"))
 # Fitting the model
-mtest <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned)
+mtest <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned, trace = 0)
 ```
 
 **Why Multinomial Regression Model?**
@@ -346,18 +338,15 @@ Multinomial regression allows us to assess how demographic/physical appearance p
 
 **Assessing multicolinearity & interactions:**
 
-Excluding incidents of hair dye and contact lenses, basing off common sense, we suspect a multicolinearity between race and eye color or hair color. Eye color and hair color also contain 9 and 14 categories respectively, largely complicating the coefficient displays of our model. Thus, we decided to construct the following nested models to conduct nested F-tests:
+We suspect multicolinearity between race, eye color, and hair color. Eye color and hair color also contain 9 and 14 categories respectively, largely complicating the coefficient displays of our model. To mitigate this complexity, we opted to create nested models to assess their impact on model fit and explanatory power, potentially removing unnecessary predictors.
 
-```{r}
+mtest1 \<- demeanor_category \~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION
 
-mtest1 <- demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION
+mtest2 \<- demeanor_category \~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR
 
-mtest2 <- demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR
+mtest3 \<- demeanor_category \~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR + SUSPECT_HAIR_COLOR
 
-mtest3 <- demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR + SUSPECT_HAIR_COLOR
-
-mtest4 <- demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR
-```
+mtest4 \<- demeanor_category \~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR
 
 ```{r, message = F, warning = F, echo = F}
 stop_and_frisk_cleaned$demeanor_category <- factor(stop_and_frisk_cleaned$demeanor_category, levels = c("Calm/Neutral", "Nervous/Anxious", "Angry/Confrontational", "Confused/Disoriented", "Indifferent"))
@@ -378,31 +367,25 @@ anova_result2 <- anova(mtest1, mtest4)
 
 Model 1 vs. Model 2 (adding suspect eye color to race):
 
--   **P-value (Pr(Chi))**: 0.14621930
-
-    -   The p-value (0.14621930) suggests that adding **`SUSPECT_EYE_COLOR`** to the model (from Model 1 to Model 2) does not result in a statistically significant improvement in model fit (at the conventional significance level of 0.05).
+-   **P-value (Pr(Chi))**: 0.14621930 - adding **`SUSPECT_EYE_COLOR`** to the model (from Model 1 to Model 2) does not result in a statistically significant improvement in model fit (at the conventional significance level of 0.05).
 
 Model 2 vs. Model 3 (adding suspect hair color to eye color & race):
 
--   **P-value (Pr(Chi))**: 0.02794697
-
-    -   The p-value (0.02794697) indicates that adding **`SUSPECT_HAIR_COLOR`** to the model (from Model 2 to Model 3) results in a statistically significant improvement in model fit (at the conventional significance level of 0.05).
+-   **P-value (Pr(Chi))**: 0.02794697 - adding **`SUSPECT_HAIR_COLOR`** to the model (from Model 2 to Model 3) results in a statistically significant improvement in model fit (at the conventional significance level of 0.05).
 
 Model 1 vs. Model 4 (adding suspect hair color to race):
 
--   **P-value (Pr(Chi))**: 0.03577523
-
-    -   The p-value (0.02794697) indicates that adding **`SUSPECT_HAIR_COLOR`** to the model results in a statistically significant improvement in model fit (at the conventional significance level of 0.05).
+-   **P-value (Pr(Chi))**: 0.03577523 - adding **`SUSPECT_HAIR_COLOR`** to the model results in a statistically significant improvement in model fit (at the conventional significance level of 0.05).
 
 **We decided to delete "hair color" from the predictor variables.**
 
-After conducting nested test on the variables (age, sex, race, hair color), 2 interactions emerged as statistically significant:
+Similarily, we conducted nested tests to assess the interactions between remaining variables (age, sex, race, hair color). 2 interactions emerged as statistically significant:
 
-SUSPECT_REPORTED_AGE \* SUSPECT_RACE_DESCRIPTION (p-value: 0.002785438)
+-   SUSPECT_REPORTED_AGE \* SUSPECT_RACE_DESCRIPTION (p-value: 0.002785438)
 
-SUSPECT_SEX \* SUSPECT_RACE_DESCRIPTION (p-value: 0.0153514)
+-   SUSPECT_SEX \* SUSPECT_RACE_DESCRIPTION (p-value: 0.0153514)
 
-We also conducted a nested - test incorporating both interactions. When compared with original model, the p-value is 0.0003565872.
+We also conducted a nested - test incorporating both interactions. When compared with original model, the p-value is 0.0003565872 - supporting the significance of adding these interaction terms.
 
 ```{r, message = F, warning = F, echo = F}
 
@@ -447,7 +430,7 @@ interactionanovafinal <- anova (m1, m1_with_interactions)
 
 **Irrelevance of Independent Alternatives Assumption?**
 
-The IIA assumption implies that the relative preference or probability of choosing one category over another is independent of the presence or characteristics of other categories in the choice set. For example the probability of police assigning an individual of given demographic/physical appearance to "Calm/Neutral" over "Nervous/Anxious" is independent from the presence/absence of the category "Indifferent".
+The IIA assumption implies that the relative preference or probability of choosing one category over another is independent of the presence or characteristics of other categories in the choice set. For example the probability of police assigning an individual of given demographic/physical appearance to "Calm/Neutral" over "Nervous/Anxious" is independent from the presence/absence of the category "Indifferent". The assumption is reasonably satisfied in our model given that our categories derived from self-generated adjectives by the police officers. The original dataset was not generated in context of the 5 categories, so we could reasonably infer that the presence/absence of other categories will not affect the likelihood of police officers assigning suspects with certain characteristics to a particular category.
 
 **Linear relationship between continuous variables and the logit transformation of the outcome variable?**
 
@@ -458,7 +441,7 @@ library(Stat2Data)
   emplogitplot1(demeanor_category ~ SUSPECT_REPORTED_AGE,
                 data = stop_and_frisk_cleaned,
                 ngroups = 10,
-                main = "Linearity satisfied for log-odd demeanor_category and SUSPECT_REPORTED_AGE"
+                main = "Linearity satisfied for log-odd \n 'demeanor_category' and 'SUSPECT_REPORTED_AGE'", 
   )
           
 ```
@@ -467,47 +450,37 @@ library(Stat2Data)
 
 Code Chunk Demo:
 
-```{r, message = F, warning = F}
+mfinal \<- multinom(demeanor_category \~ SUSPECT_REPORTED_AGE \* SUSPECT_RACE_DESCRIPTION + SUSPECT_SEX \* SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned
 
-mfinal <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE * SUSPECT_RACE_DESCRIPTION + SUSPECT_SEX * SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned, trace = 0)
-
-```
-
-```{r, message = F, warning = F, echo = F}
-#Statistical Significance Calculations
-
-coefficients_final <- coef(mfinal)
-standard_errors_final <- sqrt(diag(vcov(mfinal))) 
-
-z <- coefficients_final/ standard_errors_final
-p <- (1 - pnorm(abs(z), 0, 1)) * 2
-
-
-print(p)
-
-```
-
-![](Screenshot 2024-04-22 at 10.52.51.png)
+![](Screenshot%202024-04-22%20at%2010.52.51.png)
 
 Note: The spreadsheet displays the coefficients generated by the multinomial regression model "mfinal". Coefficients highlighted in light blue has a p-value lower than the 0.05 significance threshold. P-values close to the threshold/displayed as 0.0 (likely due to scarcity of relevant observations) are indicated on the right.
 
-Since the primary objective of our exploration is not prediction, we will not be assessing model predictive power through CV tests.
+Since the primary objective of our exploration is exploring existing trends rather than making predictions, we will not be assessing model predictive power through CV tests.
 
 **Key Interpretations:**
 
-Overall trend in model:
+As the spreadsheet suggest, our model appears to be most impactful in exploring the relationship between officer-assigned demeanor adjectives and race, particularly modulated by sex. The majority of coefficients associated with this relationship are statistically significant at the 0.05 significance threshold.
 
-Criteria - Salient Slope + Statistical Significance:
+Notably, most coefficients indicating changes in log-odds of being characterized as "indifferent" relative to "calm/neutral" based on certain demographic/physical characteristics are statistically significant, with p-values reported as 0.0. However, it's important to acknowledge that we have only 64 observations in the "indifferent" category compared to over 3,000 for "nervous/anxious," which may lead to standard errors of 0 in z-score calculations to begin with.
+
+The baseline for the "race" variable is American Indian/Alaskan Native while baseline for "sex" is female.
+
+A few significant trends we see:
+
+**- Nervous/Anxious:** Holding all other predictors constant and given that the suspect is female, the model predicts that being in all race except for Eastern/Southwest Asian correspond to a multiplicative increase in odds of being described as Nervous/Anxious rather than Calm/Neutral, compared to American Indian/Alaskan Native. Being a female Eastern/Southwest Asian (the most extreme coefficient in this category), is associated with approximately 0.002478 times the odds of being described as Nervous/Anxious rather than Calm/Neutral, compared to American Indian/Alaskan Native. When accounting for suspect sex, the overall trend remains consistent in directionality (multiplicative increase/decrease in odds). However, noticeably, being a male Eastern/Southwest Asian is associated with approximately 0.6187 times the odds of being described as Nervous/Anxious rather than Calm/Neutral, compared to American Indian/Alaskan Native - a drastic change from the previous odds ratio.
+
+**- Angry/Confrontational:** Holding all other predictors constant and given that the suspect is female, the model predicts that being in all race except for Eastern/Southwest Asian or Asian/Pacific Islander correspond to a multiplicative increase in odds of being described as Angry/Confrontational rather than Calm/Neutral, compared to American Indian/Alaskan Native. When examining the interaction coefficients accounting suspect sex, previously positive race coefficients show negative interactions, while previously negative coefficients show positive interactions. This suggests that being male decreases the multiplicative difference in odds of being described as "angry/confrontational" rather than "calm/neutral" compared to American Indian/Alaskan Native across races. The overall trend remains consistent, with the most significant change observed in Eastern/Southwest Asian and Asian/Pacific Islander individuals.
+
+**- Confused/Disoriented:** Overall trend is relatively similar to previous two categories. Black Hispanic is a noteworthy group. Holding all other predictors constant and given that the suspect is female, the model predicts that being in all race except for Eastern/Southwest Asian or Black Hispanic correspond to a multiplicative increase in odds of being described as Confused/Disoriented rather than Calm/Neutral, compared to American Indian/Alaskan Native. The model predicts being a female in Black Hispanic group is associated with approximately 0.003374 times the odds of being described as Confused/Disoriented rather than Calm/Neutral, compared to American Indian/Alaskan Native. However, the direction is reversed when the suspect is male (approximately 2.4456 times the odds).
+
+**- Indifferent:** As previously discussed, due to small sample size, the results in this category are relatively ambiguous. It is difficult to observe overall trends. Interestingly, female White and White Hispanic mark the two extreme ends (most positive and most negative). The difference is mitigated when accounting for sex.
+
+These observations highlight significant trends in the relationship between officer-assigned demeanor adjectives, race, and sex, providing insights into how certain demographic/physical characteristics may influence descriptions of suspects' demeanor during police encounters.
 
 ## Discussion
 
-Overall conclusions from analysis are clearly described, and the model results are put into the larger context of the subject matter and original research question. There is thoughtful consideration of potential limitations of the data and/or analysis, and ideas for future work are clearly described.
-
-Pattern
-
-Evaluate Model - testing + training
-
-limitations:
+Limitations:
 
 -missingness - excluding a huge proportion of data...
 
