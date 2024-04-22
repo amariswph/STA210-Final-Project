@@ -34,7 +34,7 @@ Our analysis will utilize the most recently released NYPD annual report from the
 
 Among the 82 variables, a variable of particular interest is "demeanor of person stopped" - where the police utilize 1 - 2 adjectives to describe stop subject "demeanor". Common adjectives include "calm", "nervous", "agitated", "aggressive", etc. It should be noted that these descriptions are self-generated instead of the police choosing from a pre-defined set of adjectives. We propose that these "demeanor" adjectives are indicative of the police officers' perception of the stopped subject.
 
-This project aims to investigate the relationship between physical/demographical characteristics of stopped individuals and the demeanor adjectives assigned by police officers. Specifically, we will explore:
+This project aims to investigate the relationship between physical/demographic characteristics of stopped individuals and the demeanor adjectives assigned by police officers. Specifically, we will explore:
 
 -   How do officer-assigned demeanor adjectives vary across different demographic groups (age, race, gender)?
 -   Are there correlations between certain physical characteristics and the types of demeanor descriptions used by officers during stops?
@@ -98,7 +98,7 @@ Upon reviewing the dataset, we identified a total of 1589 unique demeanor descri
 
 Note: The following descriptions do not fit well into the above categories: Defensive (21), Laughing (16), Crying (14), Excited (14), Talkative (22) Given that the low relative frequencies (indicated in the brackets), we decided to remove them along with NAs (NA, N/A).
 
-```{r, datacleaning_and_newvariable, message = F, warning = F}
+```{r, datacleaning_and_newvariable, message = F, warning = F, echo = F}
 
 stop_and_frisk_cleaned <- stop_and_frisk|>
    mutate(demeanor_category = case_when( #categorizing demeanor
@@ -134,22 +134,79 @@ stop_and_frisk_cleaned <- stop_and_frisk|>
   filter(demeanor_category != "Other/NA")  
 ```
 
-```{r, visualizing_missingness, message = F, warning = F}
+The following graph visualizes the missingess in our newly generated data set (stop_and_frisk_cleaned) consisting of our created variable "demeanor category" and other predictors variables/variables for exploratory analysis of interest:
+
+```{r, visualizing_missingness, message = F, warning = F, echo = F}
 #Visualizing Missingness in Cleaned Dataset 
 stop_and_frisk_cleaned <- stop_and_frisk_cleaned %>%
   mutate_all(~ na_if(., "(null)"))
 library(naniar)
 vis_miss(stop_and_frisk_cleaned)
-# Among our variables of interest, no variable contains a significant amount of missing values that would require specialized handling. Therefore, for subsequent exploratory analysis, we will use listwise deletion to remove observations with missing values (NA).
 ```
+
+\# Among our variables of interest, no variable contains a significant amount of missing values that would require specialized handling. Therefore, for subsequent exploratory analysis, we will use listwise deletion to remove observations with missing values (NA).
 
 ### Exploratory Data Analysis
 
+```{r, message = F, warning = F, echo = F, fig.width= 6, fig.height= 6}
+
+install.packages("gridExtra") 
+library(gridExtra)
+
+#Plots
+
+plota <- stop_and_frisk_cleaned |> 
+  ggplot(aes(x = demeanor_category, fill = FRISKED_FLAG)) + 
+  geom_bar(position = "fill") + 
+  labs(
+    x = "Demeanor Category", fill = "Frisked?", title = "Likelihood of being frisked varies across demeanor categories", subtitle = "Likelihood highest for Nervous/Anxious, lowest for Calm/Neutral"
+    ) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
+        axis.text.y = element_text(size = 4),  
+        axis.title = element_text(size = 4),  
+        plot.title = element_text(size = 5), 
+        plot.subtitle = element_text(size = 3),
+        legend.title = element_text(size = 4), 
+        legend.text = element_text(size = 4))
+
+plotb <- stop_and_frisk_cleaned |> 
+  ggplot(aes(x = demeanor_category, fill = SEARCHED_FLAG)) + 
+  geom_bar(position = "fill") + 
+  labs(
+    x = "Demeanor Category", fill = "Searched?", title = "Likelihood of being searched varies across demeanor categories", subtitle = "Likelihood highest for Nervous/Anxious, lowest for Calm/Neutral"
+    ) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
+        axis.text.y = element_text(size = 4),  
+        axis.title = element_text(size = 4),  
+        plot.title = element_text(size = 5), 
+        plot.subtitle = element_text(size = 3),
+        legend.title = element_text(size = 4), 
+        legend.text = element_text(size = 4))
+
+plotc <- stop_and_frisk_cleaned |> 
+  ggplot(aes(x = demeanor_category, fill = ASK_FOR_CONSENT_FLG)) + 
+  geom_bar(position = "fill") +   
+  labs(
+    x = "Demeanor Category", fill = "Consent for frisk/search?", title = "Likelihood police asking consent varies across demeanor categories", subtitle = "Likelihood highest for Calm/Neutral, lowest for Indifferent"
+    ) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
+        axis.text.y = element_text(size = 4),  
+        axis.title = element_text(size = 4),  
+        plot.title = element_text(size = 5), 
+        plot.subtitle = element_text(size = 3),
+        legend.title = element_text(size = 4), 
+        legend.text = element_text(size = 4))
+
+# Arrange plots in grid and adjust size
+grid.arrange(plota, plotb, plotc, ncol = 2, top = "Categorical Predictors'Relationships with Demeanor Category", heights = c(2, 2))
+
+```
+
+Summary:
+
 Variable Selection
 
-```{r, categorical, message = F, warning = F, fig.width= 8, fig.height= 10}
-install.packages("gridExtra")  # Install gridExtra for arranging plots
-library(gridExtra)
+```{r, categorical, message = F, warning = F, fig.width= 8, fig.height= 10, echo = F}
 
 # Filter out rows with missing values in necessary columns
 cleaned_data <- stop_and_frisk_cleaned %>%
@@ -165,67 +222,67 @@ plot1 <- cleaned_data %>%
   geom_bar(position = "fill") +
   labs(x = "Race Description", y = "Proportion", title = "Likelihood of being in each category varies across race", subtitle = "e.g., black hispanic most likely 'Nervous/Anxious', asian most likely 'Calm/Neutral'",  fill = "Demeanor Category") + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
-        axis.text.y = element_text(size = 4),  # Adjust text size for y-axis labels
-        axis.title = element_text(size = 4),  # Adjust text size for axis titles
+        axis.text.y = element_text(size = 4),  
+        axis.title = element_text(size = 4),  
         plot.title = element_text(size = 5), 
         plot.subtitle = element_text(size = 3),
         legend.title = element_text(size = 4), 
-        legend.text = element_text(size = 4)) # Adjust text size for plot title
+        legend.text = element_text(size = 4))
 
 plot2 <- cleaned_data %>%
   ggplot(aes(x = SUSPECT_SEX, fill = demeanor_category)) +
   geom_bar(position = "fill") +
   labs(x = "Sex", y = "Proportion", title = "Likelihood of being in each category varies across gender", subtitle = "e.g., female more likely 'Angry/Confrontational', male more likely 'Nervous/Anxious'",  fill = "Demeanor Category") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
-        axis.text.y = element_text(size = 4),  # Adjust text size for y-axis labels
-        axis.title = element_text(size = 4),  # Adjust text size for axis titles
+        axis.text.y = element_text(size = 4),  
+        axis.title = element_text(size = 4),  
         plot.title = element_text(size = 5), 
         plot.subtitle = element_text(size = 3), 
         legend.title = element_text(size = 4), 
-        legend.text = element_text(size = 4))  # Adjust text size for plot title
+        legend.text = element_text(size = 4)) 
 
 plot3 <- cleaned_data %>%
   ggplot(aes(x = SUSPECT_BODY_BUILD_TYPE, fill = demeanor_category)) +
   geom_bar(position = "fill") +
   labs(x = "Body Type", y = "Proportion", title = "Not very significant difference across body types", subtitle = "When excluding unclear variables U and XXX", fill = "Demeanor Category") + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
-        axis.text.y = element_text(size = 4),  # Adjust text size for y-axis labels
-        axis.title = element_text(size = 4),  # Adjust text size for axis titles
+        axis.text.y = element_text(size = 4),  
+        axis.title = element_text(size = 4),  
         plot.title = element_text(size = 5), 
         plot.subtitle = element_text(size = 3), 
         legend.title = element_text(size = 4), 
-        legend.text = element_text(size = 4)) # Adjust text size for plot title
+        legend.text = element_text(size = 4)) 
 
 plot4 <- cleaned_data %>%
   ggplot(aes(x = SUSPECT_EYE_COLOR, fill = demeanor_category)) +
   geom_bar(position = "fill") +
   labs(x = "Eye Color", y = "Proportion", title = "Likelihood of being in each category varies across eye color", fill = "Demeanor Category") + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
-        axis.text.y = element_text(size = 4),  # Adjust text size for y-axis labels
-        axis.title = element_text(size = 4),  # Adjust text size for axis titles
+        axis.text.y = element_text(size = 4), 
+        axis.title = element_text(size = 4),  
         plot.title = element_text(size = 5), 
         legend.title = element_text(size = 4), 
-        legend.text = element_text(size = 4)) # Adjust text size for plot title
+        legend.text = element_text(size = 4)) 
 
 plot5 <- cleaned_data %>%
   ggplot(aes(x = SUSPECT_HAIR_COLOR, fill = demeanor_category)) +
   geom_bar(position = "fill") +
   labs(x = "Hair Color", y = "Proportion", title = "Likelihood of being in each category varies across hair color", fill = "Demeanor Category") + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
-        axis.text.y = element_text(size = 4),  # Adjust text size for y-axis labels
-        axis.title = element_text(size = 4),  # Adjust text size for axis titles
+        axis.text.y = element_text(size = 4),  
+        axis.title = element_text(size = 4),  
         plot.title = element_text(size = 5), 
         legend.title = element_text(size = 4), 
-        legend.text = element_text(size = 4)) # Adjust text size for plot title
+        legend.text = element_text(size = 4)) 
 
-# Arrange plots in a 2x2 grid and adjust size
+# Arrange plots in a grid and adjust size
 grid.arrange(plot1, plot2, plot3, plot4, plot5, ncol = 2, top = "Categorical Predictors'Relationships with Demeanor Category", heights = c(2, 2, 2))
 
 ```
 
--   <div>
+-   
 
-    ```{r, fig.width= 6, fig.height= 6}
+    ```{r, fig.width= 6, fig.height= 6, message = F, warning = F, echo = F}
     stop_and_frisk_cleaned <- stop_and_frisk_cleaned |> 
       mutate(SUSPECT_REPORTED_AGE = as.numeric(SUSPECT_REPORTED_AGE), 
              SUSPECT_HEIGHT = as.numeric(SUSPECT_HEIGHT), 
@@ -233,58 +290,35 @@ grid.arrange(plot1, plot2, plot3, plot4, plot5, ncol = 2, top = "Categorical Pre
              )
 
     plot6 <- ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SUSPECT_REPORTED_AGE, fill = demeanor_category)) +
-      geom_boxplot() +
+      geom_boxplot(outlier.size = 0.5) +
       labs(x = "Demeanor Category", y = "Suspect Age", title = "Distribution of Suspect Age varies across Demanor Categories") + 
         theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
-            axis.text.y = element_text(size = 4),  # Adjust text size for y-axis labels
-            axis.title = element_text(size = 4),  # Adjust text size for axis titles
+            axis.text.y = element_text(size = 4), 
+            axis.title = element_text(size = 4), 
             plot.title = element_text(size = 5)) + 
         guides(fill = FALSE)
 
     plot7 <- ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SUSPECT_WEIGHT, fill = demeanor_category)) +
-      geom_boxplot() +
+      geom_boxplot(outlier.size = 0.5) +
       labs(x = "Demeanor Category", y = "Suspect Age", title = "No Significant Variations in Distribution across Categories") +   
       theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
-            axis.text.y = element_text(size = 4),  # Adjust text size for y-axis labels
-            axis.title = element_text(size = 4),  # Adjust text size for axis titles
-            plot.title = element_text(size = 5))+ 
+            axis.text.y = element_text(size = 4),  
+            axis.title = element_text(size = 4),  
+            plot.title = element_text(size = 5)
+            ) + 
         guides(fill = FALSE)
 
     plot8 <- ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SUSPECT_HEIGHT, fill = demeanor_category)) +
-      geom_boxplot() +
+      geom_boxplot(outlier.size = 0.5) +
       labs(x = "Demeanor Category", y = "Suspect Age", title = "No Significant Variations in Distribution across Categories") + 
       theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
-            axis.text.y = element_text(size = 4),  # Adjust text size for y-axis labels
-            axis.title = element_text(size = 4),  # Adjust text size for axis titles
+            axis.text.y = element_text(size = 4),  
+            axis.title = element_text(size = 4), 
             plot.title = element_text(size = 5)) + 
         guides(fill = FALSE)
 
     grid.arrange(plot6, plot7, plot8, ncol = 2, top = "Numeric Predictors'Relationships with Demeanor Category", heights = c(2, 2))
     ```
-
-    </div>
-
-Variable Selection Reasoning:
-
-```{r}
-#maybe move this forward 
-stop_and_frisk_cleaned |> 
-  ggplot(aes(x = demeanor_category, fill = FRISKED_FLAG)) + 
-  geom_bar(position = "fill") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-stop_and_frisk_cleaned |> 
-  ggplot(aes(x = demeanor_category, fill = SEARCHED_FLAG)) + 
-  geom_bar(position = "fill") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-stop_and_frisk_cleaned |> 
-  ggplot(aes(x = demeanor_category, fill = ASK_FOR_CONSENT_FLG)) + 
-  geom_bar(position = "fill") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-
-Interpretation:
 
 ## Methodology:
 
