@@ -141,7 +141,13 @@ The following graph visualizes the missingess in our newly generated data set (s
 stop_and_frisk_cleaned <- stop_and_frisk_cleaned %>%
   mutate_all(~ na_if(., "(null)"))
 library(naniar)
-vis_miss(stop_and_frisk_cleaned)
+vis_miss(stop_and_frisk_cleaned, sort_miss = TRUE) +
+  theme(axis.text.x = element_text(size = 5, angle = 60),    
+        axis.text.y = element_text(size = 6),
+        plot.background = element_rect(fill = "lightblue") 
+  )
+          
+
 ```
 
 \# Among our variables of interest, no variable contains a significant amount of missing values that would require specialized handling. Therefore, for subsequent exploratory analysis, we will use listwise deletion to remove observations with missing values (NA).
@@ -322,42 +328,53 @@ grid.arrange(plot1, plot2, plot3, plot4, plot5, ncol = 2, top = "Categorical Pre
 
 ## Methodology:
 
+Initial Model (code chunk demo):
+
+```{r, message = F, warning = F}
+library(nnet)
+# Set calm/neutral as baseline 
+stop_and_frisk_cleaned$demeanor_category <- factor(stop_and_frisk_cleaned$demeanor_category, levels = c("Calm/Neutral", "Nervous/Anxious", "Angry/Confrontational", "Confused/Disoriented", "Indifferent"))
+# Fitting the model
+mtest <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned)
+```
+
 **Why Multinomial Regression Model?**
 
 The primary variable of interest, "demeanor category", consists of groups of categorical descriptors that are assigned by police officers. These descriptors are neither ordinal (they simply represent clusters of adjectives with similar characteristics) nor binary (e.g., calm vs. not calm) but rather fall into multiple distinct categories.
 
 Multinomial regression allows us to assess how demographic/physical appearance predictors influence the likelihood of being assigned different demeanor categories compared to a reference category (set as calm/neutral). We can interpret the model coefficients to understand the direction and magnitude of these relationships.
 
-```{r}
-library(nnet)
-# Set calm/neutral as baseline
-stop_and_frisk_cleaned$demeanor_category <- factor(stop_and_frisk_cleaned$demeanor_category, levels = c("Calm/Neutral", "Nervous/Anxious", "Angry/Confrontational", "Confused/Disoriented", "Indifferent"))
-mtest <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned)
-
-```
-
 **Assessing multicolinearity & interactions:**
 
-Excluding incidents of hair dye and contact lenses, basing off common sense, we suspect a multicolinearity between race and eye color or hair color. Eye color and hair color also contain 9 and 14 categories respectively, largely complicating the coefficient displays of our model.
+Excluding incidents of hair dye and contact lenses, basing off common sense, we suspect a multicolinearity between race and eye color or hair color. Eye color and hair color also contain 9 and 14 categories respectively, largely complicating the coefficient displays of our model. Thus, we decided to construct the following nested models to conduct nested F-tests:
 
 ```{r}
+
+mtest1 <- demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION
+
+mtest2 <- demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR
+
+mtest3 <- demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR + SUSPECT_HAIR_COLOR
+
+mtest4 <- demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR
+```
+
+```{r, message = F, warning = F, echo = F}
 stop_and_frisk_cleaned$demeanor_category <- factor(stop_and_frisk_cleaned$demeanor_category, levels = c("Calm/Neutral", "Nervous/Anxious", "Angry/Confrontational", "Confused/Disoriented", "Indifferent"))
 stop_and_frisk_cleaned <- na.omit(stop_and_frisk_cleaned)
 
-mtest1 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION, data = stop_and_frisk_cleaned)
+mtest1 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION, data = stop_and_frisk_cleaned, trace = 0)
 
-mtest2 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR, data = stop_and_frisk_cleaned)
+mtest2 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR, data = stop_and_frisk_cleaned, trace = 0)
 
-mtest3 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned)
+mtest3 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned, trace = 0)
 
 anova_result1 <- anova(mtest1, mtest2, mtest3)
 
-mtest4 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned)
+mtest4 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned, trace = 0)
 
 anova_result2 <- anova(mtest1, mtest4)
 ```
-
-**Interpretation**:
 
 Model 1 vs. Model 2 (adding suspect eye color to race):
 
@@ -379,15 +396,62 @@ Model 1 vs. Model 4 (adding suspect hair color to race):
 
 **We decided to delete "hair color" from the predictor variables.**
 
+After conducting nested test on the variables (age, sex, race, hair color), 2 interactions emerged as statistically significant:
+
+SUSPECT_REPORTED_AGE \* SUSPECT_RACE_DESCRIPTION (p-value: 0.002785438)
+
+SUSPECT_SEX \* SUSPECT_RACE_DESCRIPTION (p-value: 0.0153514)
+
+We also conducted a nested - test incorporating both interactions. When compared with original model, the p-value is 0.0003565872.
+
+```{r, message = F, warning = F, echo = F}
+
+
+m1 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned, trace = 0)
+
+# Fit multinomial logistic regression model with interaction term
+m2 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE * SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR, 
+               data = stop_and_frisk_cleaned, trace = 0)
+
+interactionanova1 <- anova (m1, m2)
+
+m3 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE * SUSPECT_RACE_DESCRIPTION + SUSPECT_SEX + SUSPECT_HAIR_COLOR, 
+               data = stop_and_frisk_cleaned, trace = 0)
+
+interactionanova2 <- anova (m1, m3) #significant  
+
+m4 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE * SUSPECT_HAIR_COLOR + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION, 
+               data = stop_and_frisk_cleaned, trace = 0) #significant 
+
+interactionanova3 <- anova (m1, m4)
+
+m5 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX * SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned, trace = 0)
+
+interactionanova4 <- anova (m1, m5) #significant
+
+m6 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX * SUSPECT_HAIR_COLOR + SUSPECT_RACE_DESCRIPTION, data = stop_and_frisk_cleaned, trace = 0)
+
+interactionanova5 <- anova (m1, m6)
+
+m7 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION * SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned, trace = 0)
+
+interactionanova6 <- anova (m1, m7)
+
+m1_with_interactions <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE * SUSPECT_RACE_DESCRIPTION + SUSPECT_SEX * SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned, trace = 0)
+
+interactionanovafinal <- anova (m1, m1_with_interactions)
+
+```
+
 **Assumption Diagnostics**
 
 **Irrelevance of Independent Alternatives Assumption?**
 
-The IIA assumption implies that the relative preference or probability of choosing one category over another is independent of the presence or characteristics of other categories in the choice set. For example the probability of police assigning an individual of given demographic/physical appearance to "Calm/neutral" over "Nervous/Anxious" is independent from the presence/absence of the category "Indifferent".
+The IIA assumption implies that the relative preference or probability of choosing one category over another is independent of the presence or characteristics of other categories in the choice set. For example the probability of police assigning an individual of given demographic/physical appearance to "Calm/Neutral" over "Nervous/Anxious" is independent from the presence/absence of the category "Indifferent".
 
 **Linear relationship between continuous variables and the logit transformation of the outcome variable?**
 
-```{r}
+```{r, message = F, warning = F, echo = F}
 install.packages("devtools")
 devtools::install_github("statmanrobin/Stat2Data")
 library(Stat2Data)
@@ -395,19 +459,22 @@ library(Stat2Data)
                 data = stop_and_frisk_cleaned,
                 ngroups = 10,
                 main = "Linearity satisfied for log-odd demeanor_category and SUSPECT_REPORTED_AGE"
-                )
+  )
+          
 ```
 
 ## Result
 
-```{r}
-mfinal <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned)
+Code Chunk Demo:
 
-summary(mfinal)
+```{r, message = F, warning = F}
+
+mfinal <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE * SUSPECT_RACE_DESCRIPTION + SUSPECT_SEX * SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned, trace = 0)
+
 ```
 
-```{r}
-#Statistical Significance? 
+```{r, message = F, warning = F, echo = F}
+#Statistical Significance Calculations
 
 coefficients_final <- coef(mfinal)
 standard_errors_final <- sqrt(diag(vcov(mfinal))) 
@@ -420,13 +487,17 @@ print(p)
 
 ```
 
+![](Screenshot 2024-04-22 at 10.52.51.png)
+
+Note: The spreadsheet displays the coefficients generated by the multinomial regression model "mfinal". Coefficients highlighted in light blue has a p-value lower than the 0.05 significance threshold. P-values close to the threshold/displayed as 0.0 (likely due to scarcity of relevant observations) are indicated on the right.
+
+Since the primary objective of our exploration is not prediction, we will not be assessing model predictive power through CV tests.
+
 **Key Interpretations:**
 
 Overall trend in model:
 
 Criteria - Salient Slope + Statistical Significance:
-
-Note: Primary objective is prediction, so we will not be assessing model predictive power through CV tests.
 
 ## Discussion
 
