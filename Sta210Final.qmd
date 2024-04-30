@@ -20,35 +20,35 @@ stop_and_frisk <- read_excel("2023_nypd_stop_and_frisk_data.xlsx")
 
 ### Background:
 
-The stop-and-frisk program in New York City, administered by the NYPD, allows officers to detain, question, and potentially search individuals suspected of carrying weapons or contraband. This initiative has sparked significant controversy due to concerns of racial profiling. In 2017, 90% of those stopped were African-American or Latino, primarily aged between 14 and 24. Despite efforts to address racial disparities, such as policy reforms, the disproportionate impact of the stop-and-frisk program persists, highlighting potential underlying factors like implicit bias.
+The stop-and-frisk program in New York City, administered by the NYPD, allows officers to detain, question, and potentially search individuals suspected of carrying weapons or contraband. This initiative has sparked significant controversy due to concerns of racial profiling. In 2017, 90% of those stopped were African-American or Latino, primarily aged between 14 and 24 (O'Niell, 2019). Despite efforts to address racial disparities, such as policy reforms and activism campagins, the disproportionate impact of the stop-and-frisk program persists. This highlights potential underlying factors like implicit bias.
 
-Implicit bias, also known as implicit prejudice or implicit attitude, is a negative attitude, of which one is not consciously aware, against a specific social group. It is thought to be shaped by experience and based on learned associations between particular qualities and social categories, including race and/gender/age etc. Individuals' perceptions and behaviors can be influenced by the implicit biases they hold, even if they are unaware they hold such biases.
+Implicit bias, also known as implicit prejudice or implicit attitude, is a negative attitude, of which one is not consciously aware, against a specific social group. It is thought to be shaped by experience and based on learned associations between particular qualities and social categories, including race and/gender/age etc. Individuals' perceptions and behaviors (in this context, decisions to stop individuals and treatment of stopped individuals) can be influenced by the implicit biases they hold, even if they are unaware they hold such biases.
 
 ### Dataset:
 
-Each stop made by the NYPD requires officers to complete a detailed form, documenting various aspects of the encounter. Since 2017, these forms have been electronically recorded and stored in an NYPD database. The dataset contains information such as the stop's location, officer details, characteristics of the stopped individual (including age, race, gender, etc.), frisk/search details, and the officer's description of the individual's demeanor during the stop. Our analysis will utilize the most recently released NYPD annual report from the source: https://www.nyc.gov/site/nypd/stats/reports-analysis/stopfrisk.page, containing 82 variables and 16,871 observations.
+Each stop made by the NYPD requires officers to complete a detailed form, documenting various aspects of the encounter. Since 2017, these forms have been electronically recorded and stored in an NYPD database. The dataset contains information such as the stop's location, officer details, characteristics of the stopped individual (including age, race, gender, etc.), frisk/search details, and the officer's description of the individual's demeanor during the stop. Our analysis will utilize the most recently released (2023) NYPD annual report from the source: https://www.nyc.gov/site/nypd/stats/reports-analysis/stopfrisk.page, containing 82 variables and 16,871 observations.
 
 ### Project Motivation & Research Question:
 
-Among the 82 variables, a variable of particular interest is "demeanor of person stopped" - where the police utilize 1 - 2 adjectives to describe stop subject "demeanor". Common adjectives include "calm", "nervous", "agitated", "aggressive", etc. These descriptions are self-generated instead of the police choosing from a pre-defined set of adjectives. We propose that these "demeanor" adjectives are indicative of the police officers' perception of the stopped subject. This project aims to investigate the relationship between physical/demographic characteristics of stopped individuals and the demeanor adjectives assigned by police officers. Specifically, we will explore:
+A particularly intriguing variable is "demeanor of person stopped," where officers use 1 - 2 adjectives to depict the stopped individual's demeanor. These descriptors (e.g., calm, nervous, aggressive) are spontaneously generated rather than selected from a predefined list. We posit that these "demeanor" adjectives reflect the officers' subjective perceptions toward the stopped individuals. Disproportional assignment of particular "demeanor" to individuals with particular physical/demographic characteristics points to potential implicit bias towards the group. Through regression analysis, our project seeks to explore:
 
 -   How do officer-assigned demeanor adjectives vary across different demographic groups (age, race, gender)?
--   Are there correlations between certain physical characteristics and the types of demeanor descriptions used by officers during stops?
+-   Are there correlations between certain physical characteristics (e.g., body type, height) and the types of demeanor descriptions used by officers during stops?
 -   Additionally, we will briefly examine whether demeanor descriptions influence subsequent police behaviors, such as frisking, searching, or requesting consent.
 
 By analyzing these relationships, we seek to shed light on potential implicit biases affecting police interactions during stop-and-frisk encounters. Understanding these dynamics is crucial for addressing systemic biases and ensuring fair and equitable policing practices.
 
-### Variables Introduction:
+To answer our research questions, the following variables were selected:
 
-![](Variables%20Intro.png){width="551"}
+![](Variables%20Intro.png){width="566"}
 
 ### Data Cleaning & New Variable Creation
 
-Upon reviewing the dataset, we identified a total of 1589 unique demeanor descriptions. To streamline our analysis, we focused on demeanor descriptions that appeared 10 or more times, aiming to capture meaningful trends and patterns. We then categorized these 69 demeanor descriptions into 5 broader categories based on their semantic similarities. While we recognize that the categorizations can be rather arbitrary, the groupings based on similarities in emotional or behavioral context allows for a more concise representation suitable for further analysis. Here are the definitions for the 5 categories (for specific descriptions included in each categories, see appendix):
+Upon reviewing the dataset, we identified a total of 1589 unique "demeanor descriptions". We focused on demeanor descriptions that appeared 10 or more times, aiming to capture meaningful trends and patterns. We then created a new variable organizing these 69 demeanor descriptions into 5 broader categories based on their semantic similarities. While we recognize that the categorizations can be rather arbitrary, the groupings based on similarities in emotional or behavioral context allows for a more concise representation suitable for further analysis. Here are the definitions for the 5 categories (for specific descriptions included in each categories, see appendix):
 
 ![](demeanor%20categories.png){width="603"}
 
-***Note:** The following descriptions do not fit well into the above categories: Defensive (21), Laughing (16), Crying (14), Excited (14), Talkative (22) Given that the low relative frequencies (indicated in the brackets), we decided to remove them along with NAs (NA, N/A).*
+***Note:** The following descriptions do not fit well into the above categories: Defensive (21), Laughing (16), Crying (14), Excited (14), Talkative (22) Given that the low relative frequencies (in the brackets), we decided to remove them along with NAs (NA, N/A).*
 
 ```{r, datacleaning_and_newvariable, message = F, warning = F, echo = F}
 
@@ -107,7 +107,7 @@ stop_and_frisk_cleaned_for_visuals <- stop_and_frisk_cleaned |>
   
 ```
 
-The following graph visualizes the missingess in our newly generated data set (stop_and_frisk_cleaned) consisting of our created variable "demeanor category" and other predictors variables/variables for exploratory analysis of interest:
+The following graph visualizes the missingess in our newly generated data set "stop_and_frisk_cleaned" consisting of the newly created variable "demeanor category" and other variables of interest:
 
 ```{r, visualizing_missingness, message = F, warning = F, echo = F, fig.height= 4, fig.width= 8}
 #Visualizing Missingness in Cleaned Dataset 
@@ -121,7 +121,7 @@ vis_miss(stop_and_frisk_cleaned_for_visuals, sort_miss = TRUE) +
   )
 ```
 
-Note: Among our variables of interest, no variable contains a significant amount of missing values that would require specialized handling. Therefore, for subsequent exploratory analysis, we will use listwise deletion to remove observations with missing values (NA).
+***Note:** Among our variables of interest, no variable contains a significant amount of missing values that would require specialized handling. Therefore, for subsequent exploratory analysis, we will use list-wise deletion to remove observations with missing values (NA).*
 
 ### Exploratory Data Analysis
 
@@ -225,7 +225,7 @@ grid.arrange(plot1, plot3, ncol = 2, top = "Categorical Predictors'Relationships
 
 Based on the exploration above, we exclude variable "SUSPECT_BODY_BUILD_TYPE as a potential predictor variable.
 
-```{r, fig.width= 8, fig.height= 3, message = F, warning = F, echo = F}
+```{r, fig.width= 8, fig.height= 4, message = F, warning = F, echo = F}
 
 stop_and_frisk_cleaned <- stop_and_frisk_cleaned |> 
   mutate(SUSPECT_REPORTED_AGE = as.numeric(SUSPECT_REPORTED_AGE), 
