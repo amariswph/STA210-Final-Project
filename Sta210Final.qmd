@@ -109,25 +109,23 @@ stop_and_frisk_cleaned_for_visuals <- stop_and_frisk_cleaned |>
 
 The following graph visualizes the missingess in our newly generated data set (stop_and_frisk_cleaned) consisting of our created variable "demeanor category" and other predictors variables/variables for exploratory analysis of interest:
 
-```{r, visualizing_missingness, message = F, warning = F, echo = F}
+```{r, visualizing_missingness, message = F, warning = F, echo = F, fig.height= 4, fig.width= 8}
 #Visualizing Missingness in Cleaned Dataset 
 stop_and_frisk_cleaned_for_visuals <- stop_and_frisk_cleaned_for_visuals %>%
   mutate_all(~ na_if(., "(null)"))
 library(naniar)
 vis_miss(stop_and_frisk_cleaned_for_visuals, sort_miss = TRUE) +
-  theme(axis.text.x = element_text(size = 5, angle = 60),    
+  theme(axis.text.x = element_text(size = 7, angle = 90),    
         axis.text.y = element_text(size = 6),
         plot.background = element_rect(fill = "lightblue") 
   )
-          
-
 ```
 
 Note: Among our variables of interest, no variable contains a significant amount of missing values that would require specialized handling. Therefore, for subsequent exploratory analysis, we will use listwise deletion to remove observations with missing values (NA).
 
 ### Exploratory Data Analysis
 
-```{r, message = F, warning = F, echo = F, fig.width= 4, fig.height= 4}
+```{r, message = F, warning = F, echo = F, fig.width= 8, fig.height= 6}
 
 install.packages("gridExtra") 
 library(gridExtra)
@@ -227,7 +225,7 @@ grid.arrange(plot1, plot3, ncol = 2, top = "Categorical Predictors'Relationships
 
 Based on the exploration above, we exclude variable "SUSPECT_BODY_BUILD_TYPE as a potential predictor variable.
 
-```{r, fig.width= 8, fig.height= 6, message = F, warning = F, echo = F}
+```{r, fig.width= 8, fig.height= 3, message = F, warning = F, echo = F}
 
 stop_and_frisk_cleaned <- stop_and_frisk_cleaned |> 
   mutate(SUSPECT_REPORTED_AGE = as.numeric(SUSPECT_REPORTED_AGE), 
@@ -254,7 +252,7 @@ plot7 <- ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SU
         ) + 
     guides(fill = FALSE)
 
-grid.arrange(plot6, plot7, ncol = 2, top = "Numeric Predictors'Relationships with Demeanor Category", heights = c(2, 2))
+grid.arrange(plot6, plot7, ncol = 2, top = "Numeric Predictors'Relationships with Demeanor Category", heights = c(2))
 ```
 
 Based on the exploration above, we exclude variables "SUSPECT_WEIGHT" and "SUSPECT_HEIGHT" as potential predictor variables.
@@ -440,77 +438,5 @@ While our exploration aimed to assess both demographic and physical characterist
 1.Descriptions allocated to each demeanor category
 
 2.Categorical Predictors Full Exploratory Analysis
-
-```{r}
-# Filter out rows with missing values in necessary columns
-cleaned_data <- stop_and_frisk_cleaned %>%
-  filter(!is.na(SUSPECT_RACE_DESCRIPTION),
-         !is.na(SUSPECT_SEX),
-         !is.na(SUSPECT_BODY_BUILD_TYPE),
-         !is.na(SUSPECT_EYE_COLOR),
-         !is.na(SUSPECT_HAIR_COLOR))
-
-# Create individual ggplot visualizations
-plot1 <- cleaned_data %>%
-  ggplot(aes(x = SUSPECT_RACE_DESCRIPTION, fill = demeanor_category)) +
-  geom_bar(position = "fill") +
-  labs(x = "Race Description", y = "Proportion", title = "Likelihood of being in each category varies across race", subtitle = "e.g., black hispanic most likely 'Nervous/Anxious', asian most likely 'Calm/Neutral'",  fill = "Demeanor Category") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
-        axis.text.y = element_text(size = 4),  
-        axis.title = element_text(size = 4),  
-        plot.title = element_text(size = 5), 
-        plot.subtitle = element_text(size = 3),
-        legend.title = element_text(size = 4), 
-        legend.text = element_text(size = 4))
-
-plot2 <- cleaned_data %>%
-  ggplot(aes(x = SUSPECT_SEX, fill = demeanor_category)) +
-  geom_bar(position = "fill") +
-  labs(x = "Sex", y = "Proportion", title = "Likelihood of being in each category varies across gender", subtitle = "e.g., female more likely 'Angry/Confrontational', male more likely 'Nervous/Anxious'",  fill = "Demeanor Category") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
-        axis.text.y = element_text(size = 4),  
-        axis.title = element_text(size = 4),  
-        plot.title = element_text(size = 5), 
-        plot.subtitle = element_text(size = 3), 
-        legend.title = element_text(size = 4), 
-        legend.text = element_text(size = 4)) 
-
-plot3 <- cleaned_data %>%
-  ggplot(aes(x = SUSPECT_BODY_BUILD_TYPE, fill = demeanor_category)) +
-  geom_bar(position = "fill") +
-  labs(x = "Body Type", y = "Proportion", title = "Not very significant difference across body types", subtitle = "When excluding unclear variables U and XXX", fill = "Demeanor Category") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
-        axis.text.y = element_text(size = 4),  
-        axis.title = element_text(size = 4),  
-        plot.title = element_text(size = 5), 
-        plot.subtitle = element_text(size = 3), 
-        legend.title = element_text(size = 4), 
-        legend.text = element_text(size = 4)) 
-
-plot4 <- cleaned_data %>%
-  ggplot(aes(x = SUSPECT_EYE_COLOR, fill = demeanor_category)) +
-  geom_bar(position = "fill") +
-  labs(x = "Eye Color", y = "Proportion", title = "Likelihood of being in each category varies across eye color", fill = "Demeanor Category") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
-        axis.text.y = element_text(size = 4), 
-        axis.title = element_text(size = 4),  
-        plot.title = element_text(size = 5), 
-        legend.title = element_text(size = 4), 
-        legend.text = element_text(size = 4)) 
-
-plot5 <- cleaned_data %>%
-  ggplot(aes(x = SUSPECT_HAIR_COLOR, fill = demeanor_category)) +
-  geom_bar(position = "fill") +
-  labs(x = "Hair Color", y = "Proportion", title = "Likelihood of being in each category varies across hair color", fill = "Demeanor Category") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
-        axis.text.y = element_text(size = 4),  
-        axis.title = element_text(size = 4),  
-        plot.title = element_text(size = 5), 
-        legend.title = element_text(size = 4), 
-        legend.text = element_text(size = 4)) 
-
-# Arrange plots in a grid and adjust size
-grid.arrange(plot1, plot2, plot3, plot4, plot5, ncol = 2, top = "Categorical Predictors'Relationships with Demeanor Category", heights = c(2, 2, 2))
-```
 
 3.Numerical Predictor Full Exploratory Analysis
