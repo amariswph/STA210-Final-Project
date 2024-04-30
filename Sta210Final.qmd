@@ -42,13 +42,9 @@ To answer our research questions, the following variables were selected:
 
 ![](Variables%20Intro.png){width="566"}
 
-### Data Cleaning & New Variable Creation
-
 Upon reviewing the dataset, we identified a total of 1589 unique "demeanor descriptions". We focused on demeanor descriptions that appeared 10 or more times, aiming to capture meaningful trends and patterns. We then created a new variable organizing these 69 demeanor descriptions into 5 broader categories based on their semantic similarities. While we recognize that the categorizations can be rather arbitrary, the groupings based on similarities in emotional or behavioral context allows for a more concise representation suitable for further analysis. Here are the definitions for the 5 categories (for specific descriptions included in each categories, see appendix):
 
-![](demeanor%20categories.png){width="603"}
-
-***Note:** The following descriptions do not fit well into the above categories: Defensive (21), Laughing (16), Crying (14), Excited (14), Talkative (22) Given that the low relative frequencies (in the brackets), we decided to remove them along with NAs (NA, N/A).*
+![](demeanor%20categories%20new.png){width="559"}
 
 ```{r, datacleaning_and_newvariable, message = F, warning = F, echo = F}
 
@@ -87,45 +83,9 @@ stop_and_frisk_cleaned <- stop_and_frisk|>
 
 ```
 
-```{r, renaming_variables, message = F, warning = F, echo = F}
-stop_and_frisk_cleaned_for_visuals <- stop_and_frisk_cleaned |> 
-  mutate(
-    "Demanor Category" = demeanor_category, 
-    "Suspect Reported Age" = SUSPECT_REPORTED_AGE, 
-    "Suspect Sex" = SUSPECT_SEX, 
-    "Suspect Race Description" = SUSPECT_RACE_DESCRIPTION, 
-    "Suspect Height" = SUSPECT_HEIGHT, 
-    "Suspect Weight" = SUSPECT_WEIGHT, 
-    "Suspect Body Build Type" = SUSPECT_BODY_BUILD_TYPE, 
-    "Suspect Eye Color" = SUSPECT_EYE_COLOR, 
-    "Suspect Hair Color" = SUSPECT_HAIR_COLOR, 
-    "Frisked Flag" = FRISKED_FLAG, 
-    "Search Flag" = SEARCHED_FLAG, 
-    "Ask For Consent Flag" = ASK_FOR_CONSENT_FLG
-  ) |> 
-  select(-demeanor_category, -SUSPECT_REPORTED_AGE, -SUSPECT_SEX, -SUSPECT_RACE_DESCRIPTION, -SUSPECT_HEIGHT, -SUSPECT_WEIGHT, -SUSPECT_BODY_BUILD_TYPE, -SUSPECT_EYE_COLOR, -SUSPECT_HAIR_COLOR, -FRISKED_FLAG, -SEARCHED_FLAG, -ASK_FOR_CONSENT_FLG)
-  
-```
-
-The following graph visualizes the missingess in our newly generated data set "stop_and_frisk_cleaned" consisting of the newly created variable "demeanor category" and other variables of interest:
-
-```{r, visualizing_missingness, message = F, warning = F, echo = F, fig.height= 4, fig.width= 8}
-#Visualizing Missingness in Cleaned Dataset 
-stop_and_frisk_cleaned_for_visuals <- stop_and_frisk_cleaned_for_visuals %>%
-  mutate_all(~ na_if(., "(null)"))
-library(naniar)
-vis_miss(stop_and_frisk_cleaned_for_visuals, sort_miss = TRUE) +
-  theme(axis.text.x = element_text(size = 7, angle = 90),    
-        axis.text.y = element_text(size = 6),
-        plot.background = element_rect(fill = "lightblue") 
-  )
-```
-
-***Note:** Among our variables of interest, no variable contains a significant amount of missing values that would require specialized handling. Therefore, for subsequent exploratory analysis, we will use list-wise deletion to remove observations with missing values (NA).*
-
 ### Exploratory Data Analysis
 
-```{r, message = F, warning = F, echo = F, fig.width= 8, fig.height= 6}
+```{r, behaviors_analysis, message = F, warning = F, echo = F, fig.width= 7, fig.height= 5}
 
 install.packages("gridExtra") 
 library(gridExtra)
@@ -175,13 +135,15 @@ plotc <- stop_and_frisk_cleaned |>
         legend.text = element_text(size = 4))
 
 # Arrange plots in grid and adjust size
-grid.arrange(plota, plotb, plotc, ncol = 2, top = "Categorical Predictors'Relationships with Demeanor Category", heights = c(2, 2))
+grid.arrange(plota, plotb, plotc, ncol = 2, top = "Categorical Predictors' Relationships with Demeanor Category", heights = c(2, 2))
 
 ```
 
-Summary: The stacked bar graphs accounts for the percentage of suspect in each demeanor category being frisked, searched, or asked for consent. The results do support our hypothesis, where membership to a particular membership demeanor category seems to affect "police behavior." For example, those in the calm/neutral group are least likely to be frisked and most likely to be asked for consent. This exploration supports the significance of our exploration.
+The stacked bar graphs above accounts for the percentage of suspect in each demeanor category being frisked, searched, or asked for consent. The results align with our hypothesis: membership to a particular demeanor category seems to influence "police behavior." For example, those in the calm/neutral group are least likely to be frisked and most likely to be asked for consent. This visualization reinforces that officer "perception" of subject shapes officer behaviors during search and frisk encounters.
 
 **Variable Selection**
+
+We seek to identify the physical/demographic characteristics most strongly associated with assignment to different "demeanor categories". We evaluated whether the likelihood of being in each category varies across characteristics and whether the distribution (for numeric variables) differs across demeanor categories.
 
 ```{r, categorical, message = F, warning = F, fig.width= 8, fig.height= 3, echo = F}
 
@@ -223,9 +185,9 @@ grid.arrange(plot1, plot3, ncol = 2, top = "Categorical Predictors'Relationships
 
 ```
 
-Based on the exploration above, we exclude variable "SUSPECT_BODY_BUILD_TYPE as a potential predictor variable.
+Based on our visualizations, we excluded variable "Suspect Body Type" as a potential predictor variable. \*For visualization of all variables, see appendix.
 
-```{r, fig.width= 8, fig.height= 4, message = F, warning = F, echo = F}
+```{r, numeric, fig.width= 7, fig.height= 3, message = F, warning = F, echo = F}
 
 stop_and_frisk_cleaned <- stop_and_frisk_cleaned |> 
   mutate(SUSPECT_REPORTED_AGE = as.numeric(SUSPECT_REPORTED_AGE), 
@@ -255,13 +217,13 @@ plot7 <- ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SU
 grid.arrange(plot6, plot7, ncol = 2, top = "Numeric Predictors'Relationships with Demeanor Category", heights = c(2))
 ```
 
-Based on the exploration above, we exclude variables "SUSPECT_WEIGHT" and "SUSPECT_HEIGHT" as potential predictor variables.
+Based our visualizations, we excluded variables "Suspect Weight" and "Suspect Height" as potential predictor variables. \*For visualization of all variables, see appendix.
 
 ## Methodology:
 
-Initial Model: mtest \<- demeanor_category \~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR + SUSPECT_HAIR_COLOR
+Upon variable screening, our initial model consists of the following variables: **Suspect Reported Age, Suspect Sex, Suspect Race Description, Suspect Eye Color, and Suspect Hair Color**
 
-```{r, message = F, warning = F, echo = F}
+```{r, initialmodel, message = F, warning = F, echo = F}
 library(nnet)
 # Set calm/neutral as baseline 
 stop_and_frisk_cleaned$demeanor_category <- factor(stop_and_frisk_cleaned$demeanor_category, levels = c("Calm/Neutral", "Nervous/Anxious", "Angry/Confrontational", "Confused/Disoriented", "Indifferent"))
@@ -269,7 +231,7 @@ stop_and_frisk_cleaned$demeanor_category <- factor(stop_and_frisk_cleaned$demean
 mtest <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned, trace = 0)
 ```
 
-**Why Multinomial Regression Model?**
+**We decided to explore the relationship of these subject characteristics with police assigned demeanor through a multinomial regression model because:**
 
 The primary variable of interest, "demeanor category", consists of groups of categorical descriptors that are assigned by police officers. These descriptors are neither ordinal (they simply represent clusters of adjectives with similar characteristics) nor binary (e.g., calm vs. not calm) but rather fall into multiple distinct categories.
 
@@ -277,17 +239,9 @@ Multinomial regression allows us to assess how demographic/physical appearance p
 
 **Assessing multicolinearity & interactions:**
 
-We suspect multicolinearity between race, eye color, and hair color. Eye color and hair color also contain 9 and 14 categories respectively, largely complicating the coefficient displays of our model. To mitigate this complexity, we opted to create nested models to assess their impact on model fit and explanatory power, potentially removing unnecessary predictors.
+Due to the association between race and physical appearance, we suspected multicolinearity between race, eye color, and hair color. Eye color and hair color also contain 9 and 14 categories respectively, largely complicating the coefficient displays of our model. Thus, we opted to create nested models to assess their impact on model fit and explanatory power, potentially removing unnecessary predictors:
 
-mtest1 \<- demeanor_category \~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION
-
-mtest2 \<- demeanor_category \~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR
-
-mtest3 \<- demeanor_category \~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_EYE_COLOR + SUSPECT_HAIR_COLOR
-
-mtest4 \<- demeanor_category \~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR
-
-```{r, message = F, warning = F, echo = F}
+```{r, nestedtest, message = F, warning = F, echo = F}
 stop_and_frisk_cleaned$demeanor_category <- factor(stop_and_frisk_cleaned$demeanor_category, levels = c("Calm/Neutral", "Nervous/Anxious", "Angry/Confrontational", "Confused/Disoriented", "Indifferent"))
 stop_and_frisk_cleaned <- na.omit(stop_and_frisk_cleaned)
 
@@ -304,29 +258,25 @@ mtest4 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSP
 anova_result2 <- anova(mtest1, mtest4)
 ```
 
-Model 1 vs. Model 2 (adding suspect eye color to race):
+We obtained the following statistics:
 
--   **P-value (Pr(Chi))**: 0.14621930 - adding **`SUSPECT_EYE_COLOR`** to the model (from Model 1 to Model 2) does not result in a statistically significant improvement in model fit (at the conventional significance level of 0.05).
+**Adding suspect eye color to race P-value (Pr(Chi))**: \~ 0.146 - adding **`Suspect Eye Color`** to the model does not result in a statistically significant improvement in model fit (at the conventional significance level of 0.05).
 
-Model 2 vs. Model 3 (adding suspect hair color to eye color & race):
+**Adding suspect hair color to eye color & race P-value (Pr(Chi)):** \~ 0.0279 - adding **`Suspect Hair Color`** to the model results in a statistically significant improvement in model fit.
 
--   **P-value (Pr(Chi))**: 0.02794697 - adding **`SUSPECT_HAIR_COLOR`** to the model (from Model 2 to Model 3) results in a statistically significant improvement in model fit (at the conventional significance level of 0.05).
+**Adding suspect hair color to race)** **P-value (Pr(Chi))**: \~0.0358
 
-Model 1 vs. Model 4 (adding suspect hair color to race):
+**Thus, we decided to delete "Hair Color" from the predictor variables and keep "Eye Color"**
 
--   **P-value (Pr(Chi))**: 0.03577523 - adding **`SUSPECT_HAIR_COLOR`** to the model results in a statistically significant improvement in model fit (at the conventional significance level of 0.05).
+**Similarly, we conducted nested tests to assess the interactions between remaining variables (age, sex, race, hair color). 2 interactions emerged as statistically significant:**
 
-**We decided to delete "hair color" from the predictor variables.**
+-   Suspect Reported Age and Suspect Race Description (p-value: \~0.00279)
 
-Similarily, we conducted nested tests to assess the interactions between remaining variables (age, sex, race, hair color). 2 interactions emerged as statistically significant:
+-   Suspect Sex and Suspect Race Description (p-value: \~ 0.0154)
 
--   SUSPECT_REPORTED_AGE \* SUSPECT_RACE_DESCRIPTION (p-value: 0.002785438)
+*We also conducted a nested test incorporating both interactions. When compared with original model, the p-value is \~ 0.000357 - supporting the significance of adding these interaction terms.*
 
--   SUSPECT_SEX \* SUSPECT_RACE_DESCRIPTION (p-value: 0.0153514)
-
-We also conducted a nested - test incorporating both interactions. When compared with original model, the p-value is 0.0003565872 - supporting the significance of adding these interaction terms.
-
-```{r, message = F, warning = F, echo = F}
+```{r, interactiontest, message = F, warning = F, echo = F}
 
 
 m1 <- multinom(demeanor_category ~ SUSPECT_REPORTED_AGE + SUSPECT_SEX + SUSPECT_RACE_DESCRIPTION + SUSPECT_HAIR_COLOR, data = stop_and_frisk_cleaned, trace = 0)
@@ -373,14 +323,15 @@ The IIA assumption implies that the relative preference or probability of choosi
 
 **Linear relationship between continuous variables and the logit transformation of the outcome variable?**
 
-```{r, message = F, warning = F, echo = F}
+```{r, linearitycheck, message = F, warning = F, echo = F, fig.height= 3, fig.width= 6}
 install.packages("devtools")
 devtools::install_github("statmanrobin/Stat2Data")
 library(Stat2Data)
   emplogitplot1(demeanor_category ~ SUSPECT_REPORTED_AGE,
                 data = stop_and_frisk_cleaned,
                 ngroups = 10,
-                main = "Linearity satisfied for log-odd \n 'demeanor_category' and 'SUSPECT_REPORTED_AGE'", 
+                main = "Linearity satisfied for log-odd \n 'Demeanor Category' and 'Suspect Reported Age'", 
+                xlab = "Suspect Reported Age"
   )
           
 ```
@@ -391,7 +342,7 @@ Based on our predictor screening process, the predictors - Suspect Reported Age,
 
 ![](Model%20Output%20Excel%20Table.png)
 
-Note: The spreadsheet displays the coefficients generated by "mfinal" rounded to 3 decimal places. Coefficients highlighted in light blue has a p-value lower than the 0.05 significance threshold. P-values close to the threshold/displayed as 0.0 (likely due to scarcity of relevant observations) are indicated on the right.
+***Note:** The spreadsheet displays the coefficients generated by "mfinal" rounded to 3 decimal places. Coefficients highlighted in light blue has a p-value lower than the 0.05 significance threshold. P-values close to the threshold/displayed as 0.0 (likely due to scarcity of relevant observations) are indicated on the right.*
 
 Since the primary objective of our exploration is exploring existing trends rather than making predictions, we will not be assessing model predictive power through CV tests.
 
@@ -433,10 +384,34 @@ Our incomplete understanding of the dataset also posed challenges. We are uncert
 
 While our exploration aimed to assess both demographic and physical characteristics of subjects, most "physical" characteristic predictors were eliminated during the process due to their complexity or lack of statistical significance. Future analysis could expand beyond sex and race to include more nuanced physical characteristics such as hair color or dressing style. The original dataset contained a variable called "other description" that captures physical appearances such as clothing color and style---this variable was excluded due to its complexity. Future exploration could also delve deeper into other police behavior-related variables (questioning, duration of stop, etc.).
 
+\newpage
+
 ## Appendix
 
-1.Descriptions allocated to each demeanor category
+#### 1.Descriptions allocated to each demeanor category
 
-2.Categorical Predictors Full Exploratory Analysis
+![](descriptions%20in%20category.png){width="520"}
 
-3.Numerical Predictor Full Exploratory Analysis
+\newpage
+
+#### 2.Categorical Predictors Full Exploratory Analysis
+
+![](Screenshot%202024-04-30%20at%2014.45.17.png){width="603"}
+
+\newpage
+
+#### 3.Numerical Predictor Full Exploratory Analysis
+
+![](Screenshot%202024-04-30%20at%2014.45.26.png){width="480"}
+
+## Citation
+
+NYPD's Infamous Stop-and-Frisk Policy Found Unconstitutional. (n.d.). The Leadership Conference Education Fund. Retrieved April 30, 2024, from https://civilrights.org/edfund/resource/nypds-infamous-stop-and-frisk-policy-found-unconstitutional/
+
+O'Neill, J. P. (n.d.). Crime and Enforcement Activity in New York City.
+
+Publications, Reports---NYPD. (n.d.).
+
+Retrieved April 30, 2024, from https://www.nyc.gov/site/nypd/stats/reports-analysis/stopfrisk.page
+
+Stop-and-Frisk Data. (n.d.). NYCLU. Retrieved April 30, 2024, from https://www.nyclu.org/data/stop-and-frisk-data
