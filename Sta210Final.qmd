@@ -30,7 +30,7 @@ Each stop made by the NYPD requires officers to complete a detailed form, docume
 
 ### Project Motivation & Research Question:
 
-A particularly intriguing variable is "demeanor of person stopped," where officers use 1 - 2 adjectives to depict the stopped individual's demeanor. These descriptors (e.g., calm, nervous, aggressive) are spontaneously generated rather than selected from a predefined list. We posit that these "demeanor" adjectives reflect the officers' subjective perceptions toward the stopped individuals. Disproportional assignment of particular "demeanor" to individuals with particular physical/demographic characteristics points to potential implicit bias towards the group. Through regression analysis, our project seeks to explore:
+A particularly intriguing variable is "demeanor of person stopped," where officers use 1 - 2 adjectives to depict the stopped individual's demeanor. These descriptors (e.g., calm, nervous, aggressive) are spontaneously generated rather than selected from a predefined list. We posit that these "demeanor" adjectives reflect the officers' subjective perceptions toward the stopped individuals. Disproportional assignment of particular "demeanor" to individuals with particular physical/demographic characteristics points to potential implicit bias towards particular groups. Through regression analysis, our project seeks to explore:
 
 -   How do officer-assigned demeanor adjectives vary across different demographic groups (age, race, gender)?
 -   Are there correlations between certain physical characteristics (e.g., body type, height) and the types of demeanor descriptions used by officers during stops?
@@ -206,7 +206,7 @@ plot6 <- ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SU
 
 plot7 <- ggplot(data = stop_and_frisk_cleaned, aes(x = demeanor_category, y = SUSPECT_WEIGHT, fill = demeanor_category)) +
   geom_boxplot(outlier.size = 0.5) +
-  labs(x = "Demeanor Category", y = "Suspect Age", title = "No Significant Variations in Distribution across Categories") +   
+  labs(x = "Demeanor Category", y = "Suspect Weight (Pounds)", title = "No Significant Variations in Distribution of Suspect Weight across Categories") +   
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4),  
         axis.text.y = element_text(size = 4),  
         axis.title = element_text(size = 4),  
@@ -221,7 +221,7 @@ Based our visualizations, we excluded variables "Suspect Weight" and "Suspect He
 
 ## Methodology:
 
-Upon variable screening, our initial model consists of the following variables: **Suspect Reported Age, Suspect Sex, Suspect Race Description, Suspect Eye Color, and Suspect Hair Color**
+Upon initial variable screening, our initial model consists of the following variables: **Suspect Reported Age, Suspect Sex, Suspect Race Description, Suspect Eye Color, and Suspect Hair Color**
 
 ```{r, initialmodel, message = F, warning = F, echo = F}
 library(nnet)
@@ -264,11 +264,11 @@ We obtained the following statistics:
 
 **Adding suspect hair color to eye color & race P-value (Pr(Chi)):** \~ 0.0279 - adding **`Suspect Hair Color`** to the model results in a statistically significant improvement in model fit.
 
-**Adding suspect hair color to race)** **P-value (Pr(Chi))**: \~0.0358
+**Adding suspect hair color to race** **P-value (Pr(Chi))**: \~0.0358
 
 **Thus, we decided to delete "Hair Color" from the predictor variables and keep "Eye Color"**
 
-**Similarly, we conducted nested tests to assess the interactions between remaining variables (age, sex, race, hair color). 2 interactions emerged as statistically significant:**
+**Similarly, we conducted nested tests to assess the interactions between the remaining variables (age, sex, race, hair color). 2 interactions emerged as statistically significant:**
 
 -   Suspect Reported Age and Suspect Race Description (p-value: \~0.00279)
 
@@ -319,7 +319,7 @@ interactionanovafinal <- anova (m1, m1_with_interactions)
 
 **Irrelevance of Independent Alternatives Assumption?**
 
-The IIA assumption implies that the relative preference or probability of choosing one category over another is independent of the presence or characteristics of other categories in the choice set. For example the probability of police assigning an individual of given demographic/physical appearance to "Calm/Neutral" over "Nervous/Anxious" is independent from the presence/absence of the category "Indifferent". The assumption is reasonably satisfied in our model given that our categories derived from self-generated adjectives by the police officers. The original dataset was not generated in context of the 5 categories, so we could reasonably infer that the presence/absence of other categories will not affect the likelihood of police officers assigning suspects with certain characteristics to a particular category.
+The IIA assumption implies that the relative preference or probability of choosing one category over another is independent of the presence or characteristics of other categories in the choice set. For example, the probability of police assigning an individual of given demographic/physical appearance to "Calm/Neutral" over "Nervous/Anxious" is independent from the presence/absence of the category "Indifferent". The assumption is reasonably satisfied in our model given that our categories derived from self-generated adjectives by the police officers. The original data set was not generated in context of the 5 categories, so we could reasonably infer that the presence/absence of other categories will not affect the likelihood of police officers assigning suspects with certain characteristics to a demeanor category.
 
 **Linear relationship between continuous variables and the logit transformation of the outcome variable?**
 
@@ -342,7 +342,7 @@ Based on our predictor screening process, the predictors - Suspect Reported Age,
 
 ![](Model%20Output%20Excel%20Table.png)
 
-***Note:** The spreadsheet displays the coefficients generated by "mfinal" rounded to 3 decimal places. Coefficients highlighted in light blue has a p-value lower than the 0.05 significance threshold. P-values close to the threshold/displayed as 0.0 (likely due to scarcity of relevant observations) are indicated on the right.*
+***Note:** The spreadsheet displays the coefficients generated by "mfinal" rounded to 3 decimal places. Coefficients highlighted in light blue has a p-value lower than the 0.05 significance threshold. P-values close to the threshold/displayed and 0.0 (likely due to scarcity of relevant observations) are indicated on the right.*
 
 Since the primary objective of our exploration is exploring existing trends rather than making predictions, we will not be assessing model predictive power through CV tests.
 
@@ -358,7 +358,7 @@ A few significant trends we see:
 
 **- Nervous/Anxious:** Holding all other predictors constant and given that the suspect is female, the model predicts that being in all race except for Eastern/Southwest Asian correspond to a multiplicative increase in odds of being described as Nervous/Anxious rather than Calm/Neutral, compared to American Indian/Alaskan Native. Being a female Eastern/Southwest Asian (the most extreme coefficient in this category), is associated with approximately 0.002478 times the odds of being described as Nervous/Anxious rather than Calm/Neutral, compared to American Indian/Alaskan Native. When accounting for suspect sex, the overall trend remains consistent in directionality (multiplicative increase/decrease in odds). However, noticeably, being a male Eastern/Southwest Asian is associated with approximately 0.6187 times the odds of being described as Nervous/Anxious rather than Calm/Neutral, compared to American Indian/Alaskan Native - a drastic change from the previous odds ratio.
 
-**- Angry/Confrontational:** Holding all other predictors constant and given that the suspect is female, the model predicts that being in all race except for Eastern/Southwest Asian or Asian/Pacific Islander correspond to a multiplicative increase in odds of being described as Angry/Confrontational rather than Calm/Neutral, compared to American Indian/Alaskan Native. When examining the interaction coefficients accounting suspect sex, previously positive race coefficients show negative interactions, while previously negative coefficients show positive interactions. This suggests that being male decreases the multiplicative difference in odds of being described as "angry/confrontational" rather than "calm/neutral" compared to American Indian/Alaskan Native across races. The overall trend remains consistent, with the most significant change observed in Eastern/Southwest Asian and Asian/Pacific Islander individuals.
+**- Angry/Confrontational:** Holding all other predictors constant and given that the suspect is female, the model predicts that being in all race except for Eastern/Southwest Asian or Asian/Pacific Islander correspond to a multiplicative increase in odds of being described as Angry/Confrontational rather than Calm/Neutral, compared to American Indian/Alaskan Native. When examining the interaction coefficients accounting suspect sex, previously positive race coefficients show negative interactions, while previously negative coefficients show positive interactions. This suggests that being male decreases the multiplicative difference in odds of being described as "Angry/Confrontational" rather than "Calm/Neutral" compared to American Indian/Alaskan Native across races. The overall trend remains consistent, with the most significant change observed in Eastern/Southwest Asian and Asian/Pacific Islander individuals.
 
 **- Confused/Disoriented:** Overall trend is relatively similar to previous two categories. Black Hispanic is a noteworthy group. Holding all other predictors constant and given that the suspect is female, the model predicts that being in all race except for Eastern/Southwest Asian or Black Hispanic correspond to a multiplicative increase in odds of being described as Confused/Disoriented rather than Calm/Neutral, compared to American Indian/Alaskan Native. The model predicts being a female in Black Hispanic group is associated with approximately 0.003374 times the odds of being described as Confused/Disoriented rather than Calm/Neutral, compared to American Indian/Alaskan Native. However, the direction is reversed when the suspect is male (approximately 2.4456 times the odds).
 
@@ -376,9 +376,9 @@ Overall, our analysis provides insights into how implicit biases may manifest in
 
 Nevertheless, our exploration has several key limitations.
 
-First, while the original dataset includes over 16,000 observations, the cleaned dataset we worked with consists of 10,497 observations. Some observations (approximately 4% according to our missingness visualization) were also removed when necessary in subsequent modeling due to their incomplete nature. The loss of a significant proportion of the data could undermine the representativeness of our conclusions.
+First, while the original dataset includes over 16,000 observations, the cleaned dataset we worked with consists of 10,497 observations. Some observations (approximately 4% according to missingness calculations) were also removed when necessary in subsequent modeling due to their incomplete nature. The loss of a significant proportion of the data could undermine the representativeness of our conclusions.
 
-"Demeanor Categories" were used to facilitate multinomial modeling and ease interpretation of the data. While we attempted to create adjective clusters based on semantic similarities, the categories remain rather arbitrary. Some adjectives could belong to multiple categories, and the categories exclude a large proportion of potentially useful data that failed to fit in. Our initial variable screening was based on simple data visualization and may have accidentally excluded significant predictor variables.
+"Demeanor Categories" were used to facilitate multinomial modeling and ease interpretation of the data. While we attempted to create adjective clusters based on semantic similarities, the categories remain rather arbitrary. Some adjectives could belong to multiple categories, and the categories exclude a large proportion of potentially useful data that failed to fit in. Our initial variable screening was also based on simple data visualization and may have accidentally excluded significant predictor variables.
 
 Our incomplete understanding of the dataset also posed challenges. We are uncertain of the exact data collection process---for example, whether variables such as "race description" are obtained through suspect reports or police perception. The collection method could significantly influence our interpretations regarding whether "implicit bias" is at work. Additionally, we made the assumption that demeanor adjectives to some extent are indicative of "police perception of the suspect." Lastly, while our dataset reasonably satisfied the assumption of independence (each unique police stop), we lack knowledge regarding whether observations are dependent on each other, such as being produced by the same officer.
 
